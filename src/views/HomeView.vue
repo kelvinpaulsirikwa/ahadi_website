@@ -4,6 +4,7 @@ import WebNavbar from '@/components/WebNavbar.vue'
 import HeroSection from '@/components/HeroSection.vue'
 import EventTypesSection from '@/components/EventTypesSection.vue'
 import DiscoverEventsSection from '@/components/DiscoverEventsSection.vue'
+import HowItWorksSection from '@/components/HowItWorksSection.vue'
 import { usePublicEvents } from '@/composables/usePublicEvents'
 import type { PublicEvent } from '@/types/events'
 
@@ -54,10 +55,7 @@ function onEventCardClick(_event: PublicEvent) {
         />
       </section>
 
-      <section id="how-it-works" class="section" style="margin-top: 0;">
-        <h2>How It Works</h2>
-        <p>Create, share, and manage events in a few steps.</p>
-      </section>
+      <HowItWorksSection />
 
       <section id="pricing" class="section">
         <h2>Pricing</h2>
