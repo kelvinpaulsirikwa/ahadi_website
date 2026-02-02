@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { APP_NAME } from '@/config/app'
+
+const router = useRouter()
 
 const isSearching = ref(false)
 const searchQuery = ref('')
@@ -16,6 +19,11 @@ const sectionIds = {
 function scrollToSection(sectionId: string) {
   const el = document.getElementById(sectionId)
   el?.scrollIntoView({ behavior: 'smooth' })
+  menuOpen.value = false
+}
+
+function goToHome() {
+  router.push({ name: 'home' })
   menuOpen.value = false
 }
 
@@ -38,7 +46,7 @@ function onSearchSubmit() {
   <header class="navbar">
     <!-- Mobile header: logo + name + hamburger -->
     <div class="navbar-mobile">
-      <button type="button" class="mobile-logo-wrap" @click="scrollToSection(sectionIds.discover)">
+      <button type="button" class="mobile-logo-wrap" @click="goToHome">
         <img
           src="/images/static_images/ahadi_logo.png"
           alt="Ahadi"
@@ -66,6 +74,9 @@ function onSearchSubmit() {
     <Transition name="mobile-menu">
       <div v-show="menuOpen" class="mobile-menu" role="dialog" aria-label="Navigation menu">
         <nav class="mobile-nav">
+          <button type="button" class="mobile-nav-link" @click="goToHome">
+            Dashboard
+          </button>
           <button type="button" class="mobile-nav-link" @click="scrollToSection(sectionIds.discover)">
             Discover
           </button>
@@ -110,8 +121,8 @@ function onSearchSubmit() {
           </button>
         </div>
         <div class="mobile-auth">
-          <button type="button" class="btn-log-in">Log In</button>
-          <button type="button" class="btn-sign-up">Sign Up</button>
+          <button type="button" class="btn-log-in" @click="router.push({ name: 'login' })">Log In</button>
+          <button type="button" class="btn-sign-up" @click="router.push({ name: 'login' })">Sign Up</button>
         </div>
       </div>
     </Transition>
@@ -134,6 +145,9 @@ function onSearchSubmit() {
 
       <!-- Nav links -->
       <nav class="nav-links">
+        <button type="button" class="nav-link" @click="goToHome">
+          Dashboard
+        </button>
         <button type="button" class="nav-link" @click="scrollToSection(sectionIds.discover)">
           Discover
         </button>
@@ -185,8 +199,8 @@ function onSearchSubmit() {
 
       <!-- Auth -->
       <div class="auth-actions">
-        <button type="button" class="btn-log-in">Log In</button>
-        <button type="button" class="btn-sign-up">Sign Up</button>
+        <button type="button" class="btn-log-in" @click="router.push({ name: 'login' })">Log In</button>
+        <button type="button" class="btn-sign-up" @click="router.push({ name: 'login' })">Sign Up</button>
       </div>
     </div>
   </header>
@@ -569,6 +583,11 @@ function onSearchSubmit() {
   border: none;
   border-radius: 9999px;
   cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 .btn-sign-up:hover {
