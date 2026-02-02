@@ -111,6 +111,8 @@ function onLearnMore() {
     padding: 60px 16px 48px;
     gap: 48px;
     align-items: stretch;
+    min-width: 0;
+    overflow-x: hidden;
   }
 }
 
@@ -182,6 +184,7 @@ function onLearnMore() {
 @media (max-width: 768px) {
   .trust-badges {
     justify-content: center;
+    gap: 16px;
   }
 }
 
@@ -218,11 +221,27 @@ function onLearnMore() {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    padding: 20px 16px;
+    gap: 12px;
+    border-radius: 20px;
+  }
 }
 
 .stat-item {
   padding: 20px;
   border-radius: 16px;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .stat-item {
+    padding: 16px 12px;
+  }
 }
 
 .stat-value {
@@ -232,12 +251,26 @@ function onLearnMore() {
   color: var(--stat-color);
   line-height: 1;
   margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 768px) {
+  .stat-value {
+    font-size: 22px;
+  }
 }
 
 .stat-label {
   font-size: 13px;
   color: #6b7280;
   font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .stat-label {
+    font-size: 12px;
+  }
 }
 
 /* CTA Section - full width (AboutSection is outside main) */

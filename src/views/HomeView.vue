@@ -7,6 +7,7 @@ import DiscoverEventsSection from '@/components/DiscoverEventsSection.vue'
 import HowItWorksSection from '@/components/HowItWorksSection.vue'
 import PricingSection from '@/components/PricingSection.vue'
 import AboutSection from '@/components/AboutSection.vue'
+import Footer from '@/components/Footer.vue'
 import { usePublicEvents } from '@/composables/usePublicEvents'
 import type { PublicEvent } from '@/types/events'
 
@@ -63,6 +64,8 @@ function onEventCardClick(_event: PublicEvent) {
     </main>
 
     <AboutSection />
+
+    <Footer />
   </div>
 </template>
 

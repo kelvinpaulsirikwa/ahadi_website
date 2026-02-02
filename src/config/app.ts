@@ -11,3 +11,10 @@ export const APP_CONFIG = {
   /** Used for document title, meta tags, etc. */
   title: `${APP_NAME} – Events`,
 } as const
+
+/** Contact info for footer and elsewhere */
+export const CONTACT_INFO = {
+  email: 'support@ahadi.co.tz',
+  phone: '+255 123 456 789',
+  location: 'Dar es Salaam, Tanzania',
+} as const
