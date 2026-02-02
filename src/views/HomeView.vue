@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import WebNavbar from '@/components/WebNavbar.vue'
 import HeroSection from '@/components/HeroSection.vue'
 import EventTypesSection from '@/components/EventTypesSection.vue'
 import DiscoverEventsSection from '@/components/DiscoverEventsSection.vue'
+import EventDetailModal from '@/components/EventDetailModal.vue'
 import HowItWorksSection from '@/components/HowItWorksSection.vue'
 import PricingSection from '@/components/PricingSection.vue'
 import AboutSection from '@/components/AboutSection.vue'
@@ -25,13 +26,19 @@ const {
   clearFilters,
 } = usePublicEvents()
 
+const selectedEvent = ref<PublicEvent | null>(null)
+
 onMounted(() => {
   loadEventTypes()
   loadEvents(1)
 })
 
-function onEventCardClick(_event: PublicEvent) {
-  // TODO: navigate to event details or open modal
+function onEventCardClick(event: PublicEvent) {
+  selectedEvent.value = event
+}
+
+function onCloseEventModal() {
+  selectedEvent.value = null
 }
 </script>
 
@@ -66,6 +73,12 @@ function onEventCardClick(_event: PublicEvent) {
     <AboutSection />
 
     <Footer />
+
+    <EventDetailModal
+      :event="selectedEvent"
+      :open="selectedEvent !== null"
+      @close="onCloseEventModal"
+    />
   </div>
 </template>
 
