@@ -100,6 +100,14 @@ const progressPercent = computed(() => {
 
 const currency = computed(() => props.event?.currency || '')
 
+function formatAmount(value: number): string {
+  if (!Number.isFinite(value)) return '0'
+  return value.toLocaleString()
+}
+
+const formattedTotal = computed(() => formatAmount(totalContributions.value))
+const formattedTarget = computed(() => formatAmount(contributionTarget.value))
+
 function onBackdropClick(e: MouseEvent) {
   if ((e.target as HTMLElement)?.classList?.contains('modal-backdrop')) {
     emit('close')
@@ -187,49 +195,97 @@ onBeforeUnmount(() => {
                 {{ event.description }}
               </div>
 
-              <dl class="modal-details">
-                <div v-if="event.location" class="detail-row">
-                  <dt>Location</dt>
-                  <dd>
-                    <span class="detail-icon" aria-hidden="true">📍</span>
-                    {{ event.location }}
-                  </dd>
+              <!-- Event details: Date, Location, Participants -->
+              <div class="modal-details">
+                <div v-if="formattedStartDate" class="detail-item">
+                  <span class="detail-icon-wrap" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                      <line x1="16" x2="16" y1="2" y2="6" />
+                      <line x1="8" x2="8" y1="2" y2="6" />
+                      <line x1="3" x2="21" y1="10" y2="10" />
+                    </svg>
+                  </span>
+                  <div class="detail-text">
+                    <div class="detail-label">Date</div>
+                    <div class="detail-value">{{ formattedStartDate }}</div>
+                  </div>
                 </div>
-                <div v-if="event.venue_name" class="detail-row">
-                  <dt>Venue</dt>
-                  <dd>{{ event.venue_name }}</dd>
+                <div class="detail-item">
+                  <span class="detail-icon-wrap" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                  </span>
+                  <div class="detail-text">
+                    <div class="detail-label">Location</div>
+                    <div class="detail-value">{{ event.location || 'Online' }}</div>
+                  </div>
                 </div>
-                <div v-if="formattedStartDate" class="detail-row">
-                  <dt>Start</dt>
-                  <dd>{{ formattedStartDate }}</dd>
+                <div class="detail-item">
+                  <span class="detail-icon-wrap" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                  </span>
+                  <div class="detail-text">
+                    <div class="detail-label">Participants</div>
+                    <div class="detail-value">{{ participantCount }} participating</div>
+                  </div>
                 </div>
-                <div v-if="formattedEndDate && formattedEndDate !== formattedStartDate" class="detail-row">
-                  <dt>End</dt>
-                  <dd>{{ formattedEndDate }}</dd>
-                </div>
-                <div class="detail-row">
-                  <dt>Participants</dt>
-                  <dd>
-                    <span class="detail-icon" aria-hidden="true">👥</span>
-                    {{ participantCount }} participating
-                  </dd>
-                </div>
-                <div v-if="contributionTarget > 0" class="detail-row">
-                  <dt>Contributions</dt>
-                  <dd>
-                    <span class="progress-inline">{{ progressPercent }}%</span>
-                    {{ totalContributions }} {{ currency }} of {{ contributionTarget }} {{ currency }} goal
-                  </dd>
-                </div>
-                <div v-if="event.owner_name" class="detail-row">
-                  <dt>Organizer</dt>
-                  <dd>{{ event.owner_name }}</dd>
-                </div>
-              </dl>
+              </div>
 
-              <div v-if="event.join_url && event.allow_public_join" class="modal-actions">
-                <a :href="event.join_url" class="btn-join" target="_blank" rel="noopener noreferrer">
-                  Join this event
+              <!-- Progress block -->
+              <div v-if="contributionTarget > 0" class="progress-block">
+                <div class="progress-header">
+                  <span class="progress-title">Progress</span>
+                  <span class="progress-percent">{{ progressPercent }}%</span>
+                </div>
+                <div class="progress-bar-wrap">
+                  <div class="progress-bar-fill" :style="{ width: progressPercent + '%' }" />
+                </div>
+                <div class="progress-amounts">
+                  <span class="progress-current">{{ currency }}{{ formattedTotal }}</span>
+                  <span class="progress-of">of {{ currency }}{{ formattedTarget }}</span>
+                </div>
+              </div>
+
+              <!-- Action buttons -->
+              <div class="modal-actions">
+                <a href="#" class="btn btn-contribute">
+                  <span class="btn-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                    </svg>
+                  </span>
+                  Contribute
+                </a>
+                <a href="#" class="btn btn-join">
+                  <span class="btn-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <line x1="19" x2="19" y1="8" y2="14" />
+                      <line x1="22" x2="16" y1="11" y2="11" />
+                    </svg>
+                  </span>
+                  Join
+                </a>
+                <a href="#" class="btn btn-share">
+                  <span class="btn-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="18" cy="5" r="3" />
+                      <circle cx="6" cy="12" r="3" />
+                      <circle cx="18" cy="19" r="3" />
+                      <line x1="8.59" x2="15.41" y1="13.51" y2="17.49" />
+                      <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
+                    </svg>
+                  </span>
+                  Share Event
                 </a>
               </div>
             </div>
@@ -413,75 +469,189 @@ onBeforeUnmount(() => {
   white-space: pre-wrap;
 }
 
+/* Event details: Date, Location, Participants */
 .modal-details {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0 0 20px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.detail-icon-wrap {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+}
+
+.detail-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 2px;
+}
+
+.detail-value {
+  font-size: 14px;
+  color: #374151;
   margin: 0;
+  line-height: 1.4;
+}
+
+.detail-text {
+  min-width: 0;
+}
+
+.detail-item .detail-label,
+.detail-item .detail-value {
+  display: block;
+}
+
+/* Progress block */
+.progress-block {
+  background: #f3f4f6;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.progress-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.progress-percent {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a283b;
+}
+
+.progress-bar-wrap {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: #1a283b;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-amounts {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.progress-current {
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Action buttons */
+.modal-actions {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.detail-row {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.detail-row dt {
-  font-size: 11px;
-  font-weight: 600;
-  color: #9ca3af;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 0;
-}
-
-.detail-row dd {
-  font-size: 14px;
-  color: #374151;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.detail-icon {
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-.progress-inline {
-  display: inline-block;
-  font-weight: 600;
-  color: #1a283b;
-  background: #f3f4f6;
-  padding: 2px 8px;
-  border-radius: 6px;
-  margin-right: 6px;
-}
-
-.modal-actions {
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid #e5e7eb;
-}
-
-.btn-join {
+.modal-actions .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
+  gap: 10px;
   padding: 14px 20px;
   font-size: 16px;
   font-weight: 600;
-  color: #fff;
-  background: #1a283b;
   border-radius: 12px;
   text-decoration: none;
-  transition: background 0.2s, transform 0.02s;
+  transition: background 0.2s, border-color 0.2s;
+  box-sizing: border-box;
+  border: 2px solid transparent;
+}
+
+.btn-contribute {
+  width: 100%;
+  background: #22c55e;
+  color: #fff;
+}
+
+.btn-contribute:hover {
+  background: #16a34a;
+}
+
+.btn-join {
+  width: 100%;
+  background: #1a283b;
+  color: #fff;
 }
 
 .btn-join:hover {
   background: #2d3a4f;
+}
+
+.modal-actions .btn-join {
+  margin-top: 0;
+}
+
+.btn-share {
+  width: 100%;
+  background: #fff;
+  color: #374151;
+  border-color: #e5e7eb;
+}
+
+.btn-share:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 400px) {
+  .modal-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .modal-actions .btn-contribute,
+  .modal-actions .btn-join {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .modal-actions .btn-share {
+    width: 100%;
+  }
 }
 
 /* Transition */
