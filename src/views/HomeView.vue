@@ -5,6 +5,7 @@ import HeroSection from '@/components/HeroSection.vue'
 import EventTypesSection from '@/components/EventTypesSection.vue'
 import DiscoverEventsSection from '@/components/DiscoverEventsSection.vue'
 import HowItWorksSection from '@/components/HowItWorksSection.vue'
+import PricingSection from '@/components/PricingSection.vue'
 import { usePublicEvents } from '@/composables/usePublicEvents'
 import type { PublicEvent } from '@/types/events'
 
@@ -57,10 +58,7 @@ function onEventCardClick(_event: PublicEvent) {
 
       <HowItWorksSection />
 
-      <section id="pricing" class="section">
-        <h2>Pricing</h2>
-        <p>Simple, transparent pricing for everyone.</p>
-      </section>
+      <PricingSection />
 
       <section id="about" class="section">
         <h2>About</h2>

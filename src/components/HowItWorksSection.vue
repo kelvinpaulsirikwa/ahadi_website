@@ -86,7 +86,7 @@ const STEPS = [
 
 @media (max-width: 768px) {
   .how-it-works {
-    padding: 60px 24px;
+    padding: 60px 16px;
   }
 }
 
