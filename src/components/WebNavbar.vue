@@ -31,7 +31,7 @@ function closeAccountMenu() {
 
 function onMyEvents() {
   closeAccountMenu()
-  router.push({ name: 'home' })
+  router.push({ name: 'events' })
 }
 
 function onDashboard() {

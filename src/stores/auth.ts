@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { getAccessToken, clearAccessToken } from '@/api/token'
 
-const ACCESS_KEY = 'ahadi_access'
 const EXPIRY_KEY = 'ahadi_access_expiry'
 const REFRESH_KEY = 'ahadi_refresh'
 const USER_KEY = 'ahadi_user'
@@ -25,17 +25,17 @@ function getStoredExpiry(): number | null {
 
 function isSessionValid(): boolean {
   const expiry = getStoredExpiry()
-  if (expiry == null) return !!localStorage.getItem(ACCESS_KEY)
+  if (expiry == null) return !!getAccessToken()
   return Date.now() < expiry
 }
 
 function readLoggedIn(): boolean {
   try {
     if (typeof localStorage === 'undefined') return false
-    const token = localStorage.getItem(ACCESS_KEY)
+    const token = getAccessToken()
     if (!token || token.length === 0) return false
     if (!isSessionValid()) {
-      localStorage.removeItem(ACCESS_KEY)
+      clearAccessToken()
       localStorage.removeItem(EXPIRY_KEY)
       localStorage.removeItem(REFRESH_KEY)
       localStorage.removeItem(USER_KEY)
@@ -93,16 +93,16 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem(EXPIRY_KEY, String(expiry))
   }
 
-  function logout() {
-    hasAccessToken.value = false
-    user.value = null
-    if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem(ACCESS_KEY)
-      localStorage.removeItem(EXPIRY_KEY)
-      localStorage.removeItem(REFRESH_KEY)
-      localStorage.removeItem(USER_KEY)
-    }
+function logout() {
+  hasAccessToken.value = false
+  user.value = null
+  clearAccessToken()
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem(EXPIRY_KEY)
+    localStorage.removeItem(REFRESH_KEY)
+    localStorage.removeItem(USER_KEY)
   }
+}
 
   return { isLoggedIn, user, hydrate, setLoggedIn, setUser, setSessionExpiry, logout }
 })

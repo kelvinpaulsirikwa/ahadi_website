@@ -1,6 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { getAccessToken } from '@/api/token'
 import HomeView from '@/views/HomeView.vue'
 import LoginView from '@/views/LoginView.vue'
+import EventsView from '@/views/EventsView.vue'
+import CreateEventView from '@/views/CreateEventView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -15,7 +18,28 @@ const router = createRouter({
       name: 'login',
       component: LoginView,
     },
+    {
+      path: '/events',
+      name: 'events',
+      component: EventsView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/events/create',
+      name: 'events-create',
+      component: CreateEventView,
+      meta: { requiresAuth: true },
+    },
   ],
+})
+
+router.beforeEach((to, _from, next) => {
+  const hasToken = !!getAccessToken()
+  if (to.meta.requiresAuth && !hasToken) {
+    next({ name: 'login', query: { redirect: to.fullPath } })
+  } else {
+    next()
+  }
 })
 
 export default router

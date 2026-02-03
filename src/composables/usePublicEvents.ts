@@ -1,5 +1,5 @@
 import { ref, computed, watch } from 'vue'
-import { fetchEventTypes } from '@/api/eventTypes'
+import { fetchEventTypes } from '@/api/event_type'
 import { fetchPublicEvents } from '@/api/publicEvents'
 import type { EventType } from '@/types/events'
 import type { PublicEvent } from '@/types/events'
@@ -26,7 +26,7 @@ export function usePublicEvents() {
     eventTypesLoading.value = true
     eventTypesError.value = null
     try {
-      const data = await fetchEventTypes({ page: '1' })
+      const data = await fetchEventTypes({ page: 1 })
       eventTypes.value = data.results ?? []
     } catch (e) {
       eventTypesError.value = e instanceof Error ? e : new Error(String(e))

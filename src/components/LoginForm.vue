@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { signInWithGoogle } from '@/api/auth'
+import { setAccessToken, extractAccessTokenFromResponse } from '@/api/token'
 import PhoneVerifyModal from '@/components/PhoneVerifyModal.vue'
 import type { VerifyOtpResponse } from '@/api/auth'
 
@@ -97,19 +98,23 @@ function onCreateEvent() {
 }
 
 function onPhoneVerified(data: VerifyOtpResponse) {
-  const d = data?.data
-  const access = d?.access ?? d?.access_token
-  const refresh = d?.refresh ?? d?.refresh_token
-  if (access != null) {
-    localStorage.setItem('ahadi_access', String(access))
-  } else {
-    localStorage.setItem('ahadi_access', 'session')
+  const access = extractAccessTokenFromResponse(data)
+  if (access == null || access === '') {
+    return
   }
-  if (refresh != null) {
-    localStorage.setItem('ahadi_refresh', String(refresh))
+  setAccessToken(access)
+  const d = data?.data as Record<string, unknown> | undefined
+  const refresh =
+    d?.refresh ??
+    d?.refresh_token ??
+    (data as unknown as Record<string, unknown>).refresh ??
+    (data as unknown as Record<string, unknown>).refresh_token
+  const userPayload = d?.user ?? (data as unknown as Record<string, unknown>).user
+  if (refresh != null && typeof refresh === 'string') {
+    localStorage.setItem('ahadi_refresh', refresh)
   }
-  if (d?.user != null && typeof d.user === 'object') {
-    authStore.setUser(d.user as { full_name?: string; id?: number; phone?: string; email?: string | null; [key: string]: unknown })
+  if (userPayload != null && typeof userPayload === 'object') {
+    authStore.setUser(userPayload as { full_name?: string; id?: number; phone?: string; email?: string | null; [key: string]: unknown })
   }
   authStore.setSessionExpiry()
   authStore.setLoggedIn(true)
