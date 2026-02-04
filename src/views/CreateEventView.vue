@@ -69,7 +69,7 @@ async function submit() {
         form.endDate ? toIsoDateTime(form.endDate, form.endTime) : undefined,
       location: form.location.trim() || undefined,
       venue_name: form.venueName.trim() || undefined,
-      contribution_target: form.contributionTarget.trim() || undefined,
+      contribution_target: String(form.contributionTarget ?? '').trim() || undefined,
       visibility: form.visibility,
       chat_enabled: form.chatEnabled,
       status: 'ACTIVE',

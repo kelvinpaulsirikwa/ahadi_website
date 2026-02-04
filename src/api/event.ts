@@ -116,14 +116,39 @@ export function fetchEventAnnouncements(id: number): Promise<unknown> {
 
 // --- My events (auth required) ---
 
-/** GET /api/v1/events/my_events/ – User's events (auth required). */
-export function fetchMyEvents(params?: { page?: number }): Promise<PaginatedResponse<PublicEvent>> {
+/** Backend may return { success, message, data } or paginated { count, next, previous, results }. */
+interface MyEventsRawResponse {
+  success?: boolean
+  message?: string
+  data?: PublicEvent[]
+  count?: number
+  next?: string | null
+  previous?: string | null
+  results?: PublicEvent[]
+}
+
+/** GET /api/v1/events/my_events/ – User's events (auth required). Normalizes { data } to { results }. */
+export async function fetchMyEvents(params?: { page?: number }): Promise<PaginatedResponse<PublicEvent>> {
   const search: Record<string, string> = {}
   if (params?.page != null) search.page = String(params.page)
-  return getWithAuth<PaginatedResponse<PublicEvent>>(
+  const res = await getWithAuth<MyEventsRawResponse>(
     'events/my_events/',
     Object.keys(search).length ? search : undefined
   )
+  if (Array.isArray(res.data) && res.results == null) {
+    return {
+      count: res.data.length,
+      next: null,
+      previous: null,
+      results: res.data,
+    }
+  }
+  return {
+    count: res.count ?? res.results?.length ?? 0,
+    next: res.next ?? null,
+    previous: res.previous ?? null,
+    results: res.results ?? [],
+  }
 }
 
 // --- Admins ---

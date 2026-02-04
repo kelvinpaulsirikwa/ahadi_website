@@ -104,8 +104,6 @@ function onOtpInput(e: Event) {
   if (v.length === 6) submitVerify()
 }
 
-const BYPASS_CODE = '123456'
-
 function submitVerify() {
   const code = otpCode.value.trim()
   if (code.length !== 6) {
@@ -114,22 +112,6 @@ function submitVerify() {
   }
   error.value = null
   loading.value = true
-
-  if (code === BYPASS_CODE) {
-    emit('verified', {
-      success: true,
-      message: 'OTP verified (bypass)',
-      data: {
-        access: 'bypass-access-token',
-        refresh: 'bypass-refresh-token',
-        user: { id: 1, phone: phone.value.trim(), email: null, full_name: 'User', is_active: true },
-        requires_phone_link: false,
-      },
-    })
-    emit('close')
-    loading.value = false
-    return
-  }
 
   verifyOtp(phone.value.trim(), code)
     .then((data) => {
