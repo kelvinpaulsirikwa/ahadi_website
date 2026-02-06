@@ -12,6 +12,10 @@ import EventTransactionsView from '@/views/EventTransactionsView.vue'
 import EditEventView from '@/views/EditEventView.vue'
 import EventChatView from '@/views/EventChatView.vue'
 import CalendarView from '@/views/CalendarView.vue'
+import ProfileView from '@/views/ProfileView.vue'
+import WalletView from '@/views/WalletView.vue'
+import TransactionsView from '@/views/TransactionsView.vue'
+import SubscriptionsView from '@/views/SubscriptionsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -90,6 +94,30 @@ const router = createRouter({
       path: '/events/:id/chat',
       name: 'events-chat',
       component: EventChatView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: ProfileView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/wallet',
+      name: 'wallet',
+      component: WalletView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/transactions',
+      name: 'transactions',
+      component: TransactionsView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/subscriptions',
+      name: 'subscriptions',
+      component: SubscriptionsView,
       meta: { requiresAuth: true },
     },
   ],

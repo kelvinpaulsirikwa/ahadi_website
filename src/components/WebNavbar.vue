@@ -53,7 +53,7 @@ function onDashboard() {
 
 function onProfile() {
   closeAccountMenu()
-  router.push({ name: 'home' })
+  router.push({ name: 'profile' })
 }
 
 async function onSignOut() {
