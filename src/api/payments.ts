@@ -53,8 +53,20 @@ export function checkoutBank(body?: unknown): Promise<unknown> {
 }
 
 /**
+ * GET /api/v1/payments/checkout/mno/fee/
+ * Get transaction fee for amount and provider. Query: amount, provider.
+ */
+export function getCheckoutMnoFee(amount: number, provider: string): Promise<unknown> {
+  return get<unknown>('payments/checkout/mno/fee/', {
+    amount: String(amount),
+    provider,
+  })
+}
+
+/**
  * POST /api/v1/payments/checkout/mno/
  * Mobile money checkout. User gets USSD prompt to confirm.
+ * Body: event_id, amount, phone_number, provider, payer_name? (optional).
  */
 export function checkoutMno(body?: unknown): Promise<unknown> {
   return post<unknown>('payments/checkout/mno/', body ?? {})
@@ -219,10 +231,11 @@ export function fetchSubscriptionPlans(): Promise<unknown> {
 
 /**
  * GET /api/v1/payments/transactions/
- * Transactions for the authenticated user.
+ * Transactions for the authenticated user. Optional status filter: SUCCESS, PENDING, FAILED.
  */
-export function fetchMyTransactions(): Promise<unknown> {
-  return getWithAuth<unknown>('payments/transactions/')
+export function fetchMyTransactions(params?: { status?: string }): Promise<unknown> {
+  const query = params?.status ? { status: params.status } : undefined
+  return getWithAuth<unknown>('payments/transactions/', query as Record<string, string> | undefined)
 }
 
 /**

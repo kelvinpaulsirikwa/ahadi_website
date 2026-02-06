@@ -4,20 +4,19 @@ import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import WebNavbar from '@/components/WebNavbar.vue'
 import { useAuthStore } from '@/stores/auth'
-import { getMe, patchMe, deleteMe } from '@/api/auth'
+import { getMe, deleteMe, patchMeProfilePicture } from '@/api/auth'
+import { mediaUrl } from '@/api/client'
 
 const router = useRouter()
+const fileInput = ref<HTMLInputElement | null>(null)
+const uploadingPhoto = ref(false)
+const photoError = ref('')
 const authStore = useAuthStore()
 const { user: storeUser } = storeToRefs(authStore)
 
 const loading = ref(true)
 const errorMessage = ref('')
 const profile = ref<Record<string, unknown> | null>(null)
-const showEditModal = ref(false)
-const editName = ref('')
-const editEmail = ref('')
-const saving = ref(false)
-const editError = ref('')
 
 async function loadProfile() {
   loading.value = true
@@ -47,8 +46,7 @@ const phone = computed(() => (displayUser.value?.phone as string) ?? 'Not set')
 const email = computed(() => (displayUser.value?.email as string) ?? 'Not set')
 const profilePictureUrl = computed(() => {
   const url = displayUser.value?.profile_picture as string | undefined
-  if (url) return url.startsWith('http') ? url : (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '') + (url.startsWith('/') ? url : `/${url}`)
-  return null
+  return url ? mediaUrl(url) : null
 })
 const initial = computed(() => {
   const name = fullName.value
@@ -87,33 +85,37 @@ const features = computed(() => {
   }
 })
 
-function openEdit() {
-  editName.value = (displayUser.value?.full_name as string) ?? ''
-  editEmail.value = (displayUser.value?.email as string) ?? ''
-  editError.value = ''
-  showEditModal.value = true
+function triggerPhotoUpload() {
+  photoError.value = ''
+  fileInput.value?.click()
 }
 
-function closeEdit() {
-  showEditModal.value = false
-}
-
-async function saveProfile() {
-  saving.value = true
-  editError.value = ''
+async function onPhotoSelected(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file || !file.type.startsWith('image/')) {
+    photoError.value = 'Please select an image file.'
+    return
+  }
+  input.value = ''
+  uploadingPhoto.value = true
+  photoError.value = ''
   try {
-    const res = await patchMe({ full_name: editName.value.trim(), email: editEmail.value.trim() }) as { data?: Record<string, unknown> }
+    const res = await patchMeProfilePicture(file) as { data?: Record<string, unknown> }
     const data = res && typeof res === 'object' && 'data' in res ? res.data : res
     if (data && typeof data === 'object') {
       profile.value = { ...profile.value, ...data } as Record<string, unknown>
       authStore.setUser(data as { id?: number; full_name?: string; phone?: string; email?: string | null; [key: string]: unknown })
     }
-    closeEdit()
   } catch (e) {
-    editError.value = e instanceof Error ? e.message : 'Failed to update'
+    photoError.value = e instanceof Error ? e.message : 'Upload failed'
   } finally {
-    saving.value = false
+    uploadingPhoto.value = false
   }
+}
+
+function openEdit() {
+  router.push({ name: 'profile-edit' })
 }
 
 function goToSubscriptions() {
@@ -178,15 +180,33 @@ onMounted(() => loadProfile())
 
       <template v-else-if="displayUser">
         <div class="profile-picture-section">
-          <div class="avatar-wrap">
+          <input
+            ref="fileInput"
+            type="file"
+            accept="image/*"
+            class="photo-input"
+            aria-label="Upload profile photo"
+            @change="onPhotoSelected"
+          />
+          <button
+            type="button"
+            class="avatar-wrap avatar-btn"
+            :disabled="uploadingPhoto"
+            @click="triggerPhotoUpload"
+          >
+            <div v-if="uploadingPhoto" class="avatar-overlay"><span class="spinner" /></div>
             <img
-              v-if="profilePictureUrl"
+              v-else-if="profilePictureUrl"
               :src="profilePictureUrl"
               alt="Profile"
               class="avatar-img"
             />
             <span v-else class="avatar-initial">{{ initial }}</span>
-          </div>
+          </button>
+          <p v-if="photoError" class="photo-error">{{ photoError }}</p>
+          <button type="button" class="btn-change-photo" :disabled="uploadingPhoto" @click="triggerPhotoUpload">
+            {{ uploadingPhoto ? 'Uploading…' : 'Change profile photo' }}
+          </button>
           <p class="profile-name">{{ fullName }}</p>
           <p class="profile-phone">{{ phone }}</p>
         </div>
@@ -300,30 +320,6 @@ onMounted(() => loadProfile())
         </div>
       </template>
     </main>
-
-    <!-- Edit modal -->
-    <Teleport to="body">
-      <div v-if="showEditModal" class="modal-backdrop" @click.self="closeEdit">
-        <div class="modal">
-          <h3 class="modal-title">Edit Profile</h3>
-          <p v-if="editError" class="modal-error">{{ editError }}</p>
-          <div class="modal-field">
-            <label>Full Name</label>
-            <input v-model="editName" type="text" placeholder="Full name" />
-          </div>
-          <div class="modal-field">
-            <label>Email</label>
-            <input v-model="editEmail" type="email" placeholder="Email" />
-          </div>
-          <div class="modal-actions">
-            <button type="button" class="btn-cancel" @click="closeEdit">Cancel</button>
-            <button type="button" class="btn-save" :disabled="saving" @click="saveProfile">
-              {{ saving ? 'Saving…' : 'Save' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
   </div>
 </template>
 
@@ -409,6 +405,14 @@ onMounted(() => loadProfile())
   margin-bottom: 24px;
 }
 
+.photo-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .avatar-wrap {
   width: 120px;
   height: 120px;
@@ -421,6 +425,43 @@ onMounted(() => loadProfile())
   align-items: center;
   justify-content: center;
 }
+
+.avatar-btn {
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+}
+
+.avatar-btn:disabled { cursor: wait; }
+.avatar-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.photo-error { color: #dc2626; font-size: 13px; margin: 8px 0 0; }
+.btn-change-photo {
+  margin-top: 8px;
+  padding: 6px 12px;
+  font-size: 14px;
+  color: #1a283b;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.btn-change-photo:hover:not(:disabled) { background: #f1f5f9; }
+.btn-change-photo:disabled { opacity: 0.7; cursor: wait; }
 
 .avatar-img {
   width: 100%;
@@ -588,41 +629,4 @@ onMounted(() => loadProfile())
 }
 
 .btn-delete:hover { background: #fef2f2; }
-
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 16px;
-}
-
-.modal {
-  background: #fff;
-  border-radius: 16px;
-  padding: 24px;
-  width: 100%;
-  max-width: 400px;
-}
-
-.modal-title { font-size: 20px; font-weight: 700; margin: 0 0 16px; }
-.modal-error { color: #dc2626; font-size: 14px; margin-bottom: 12px; }
-.modal-field { margin-bottom: 16px; }
-.modal-field label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; color: #374151; }
-.modal-field input {
-  width: 100%;
-  padding: 10px 12px;
-  font-size: 15px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  box-sizing: border-box;
-}
-
-.modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; }
-.btn-cancel { padding: 10px 18px; font-size: 14px; color: #64748b; background: #f1f5f9; border: none; border-radius: 8px; cursor: pointer; }
-.btn-save { padding: 10px 18px; font-size: 14px; font-weight: 500; color: #fff; background: #1a283b; border: none; border-radius: 8px; cursor: pointer; }
-.btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
 </style>

@@ -32,6 +32,28 @@ export function assetUrl(path: string): string {
   return base ? `${base}${path.startsWith('/') ? path : `/${path}`}` : path
 }
 
+/**
+ * Base URL for media (e.g. profile pictures). Uses origin of API_BASE_URL from .env
+ * so /media/profile_pictures/x.jpg becomes https://ahadiapi.quantumvision-tech.com/media/profile_pictures/x.jpg
+ */
+function getMediaBaseUrl(): string {
+  const base = getBaseUrl()
+  if (!base) return typeof window !== 'undefined' ? window.location.origin : ''
+  try {
+    return new URL(base).origin
+  } catch {
+    return base
+  }
+}
+
+/** Full URL for a media path (e.g. /media/profile_pictures/xxx.jpg). Uses API host from .env. */
+export function mediaUrl(path: string): string {
+  if (!path) return ''
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  const origin = getMediaBaseUrl()
+  return origin ? `${origin}${path.startsWith('/') ? path : `/${path}`}` : path
+}
+
 import { getAccessToken } from '@/api/token'
 
 /** Auth scheme: "Bearer" (JWT, default) or "Token" (e.g. Django REST). Set VITE_AUTH_SCHEME in .env if needed. */
@@ -104,6 +126,20 @@ export async function patch<T>(path: string, body: unknown): Promise<T> {
     method: 'PATCH',
     headers: jsonHeaders(),
     body: JSON.stringify(body),
+  })
+  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`)
+  const text = await res.text()
+  return (text ? JSON.parse(text) : {}) as T
+}
+
+/** PATCH with FormData (e.g. file upload). Do not set Content-Type; browser sets multipart boundary. */
+export async function patchMultipart<T>(path: string, formData: FormData): Promise<T> {
+  const url = apiUrl(path)
+  const headers = getAuthHeaders()
+  const res = await fetch(url, {
+    method: 'PATCH',
+    headers,
+    body: formData,
   })
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`)
   const text = await res.text()

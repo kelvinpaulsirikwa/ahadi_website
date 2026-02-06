@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import WebNavbar from '@/components/WebNavbar.vue'
 import HeroSection from '@/components/HeroSection.vue'
 import EventTypesSection from '@/components/EventTypesSection.vue'
 import DiscoverEventsSection from '@/components/DiscoverEventsSection.vue'
-import EventDetailModal from '@/components/EventDetailModal.vue'
 import HowItWorksSection from '@/components/HowItWorksSection.vue'
 import PricingSection from '@/components/PricingSection.vue'
 import AboutSection from '@/components/AboutSection.vue'
 import Footer from '@/components/Footer.vue'
 import { usePublicEvents } from '@/composables/usePublicEvents'
 import type { PublicEvent } from '@/types/events'
+
+const router = useRouter()
 
 const {
   eventTypes,
@@ -26,19 +28,13 @@ const {
   clearFilters,
 } = usePublicEvents()
 
-const selectedEvent = ref<PublicEvent | null>(null)
-
 onMounted(() => {
   loadEventTypes()
   loadEvents(1)
 })
 
 function onEventCardClick(event: PublicEvent) {
-  selectedEvent.value = event
-}
-
-function onCloseEventModal() {
-  selectedEvent.value = null
+  router.push({ name: 'event-public', params: { id: String(event.id) } })
 }
 </script>
 
@@ -73,12 +69,6 @@ function onCloseEventModal() {
     <AboutSection />
 
     <Footer />
-
-    <EventDetailModal
-      :event="selectedEvent"
-      :open="selectedEvent !== null"
-      @close="onCloseEventModal"
-    />
   </div>
 </template>
 

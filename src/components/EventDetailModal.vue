@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { assetUrl } from '@/api/client'
+import ContributeDialog from '@/components/ContributeDialog.vue'
+import JoinDialog from '@/components/JoinDialog.vue'
 import type { PublicEvent } from '@/types/events'
 
 const props = defineProps<{
@@ -116,6 +118,17 @@ function onBackdropClick(e: MouseEvent) {
 
 function onClose() {
   emit('close')
+}
+
+const showContributeDialog = ref(false)
+const showJoinDialog = ref(false)
+
+function openContribute() {
+  showContributeDialog.value = true
+}
+
+function openJoin() {
+  showJoinDialog.value = true
 }
 
 function handleEscape(e: KeyboardEvent) {
@@ -256,15 +269,15 @@ onBeforeUnmount(() => {
 
               <!-- Action buttons -->
               <div class="modal-actions">
-                <a href="#" class="btn btn-contribute">
+                <button type="button" class="btn btn-contribute" @click="openContribute">
                   <span class="btn-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
                     </svg>
                   </span>
                   Contribute
-                </a>
-                <a href="#" class="btn btn-join">
+                </button>
+                <button type="button" class="btn btn-join" @click="openJoin">
                   <span class="btn-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
@@ -274,7 +287,7 @@ onBeforeUnmount(() => {
                     </svg>
                   </span>
                   Join
-                </a>
+                </button>
                 <a href="#" class="btn btn-share">
                   <span class="btn-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -293,6 +306,19 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </Transition>
+
+    <ContributeDialog
+      :event="event"
+      :open="showContributeDialog"
+      @close="showContributeDialog = false"
+      @success="showContributeDialog = false"
+    />
+    <JoinDialog
+      :event="event"
+      :open="showJoinDialog"
+      @close="showJoinDialog = false"
+      @success="showJoinDialog = false"
+    />
   </Teleport>
 </template>
 
@@ -593,6 +619,8 @@ onBeforeUnmount(() => {
   transition: background 0.2s, border-color 0.2s;
   box-sizing: border-box;
   border: 2px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .btn-contribute {

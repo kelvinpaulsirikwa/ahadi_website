@@ -1,5 +1,5 @@
 import { getAuthPrefix } from '@/api/client'
-import { get, post, patch, del } from '@/api/client'
+import { get, post, patch, del, patchMultipart } from '@/api/client'
 
 const authPath = (suffix: string) => `${getAuthPrefix()}/${suffix}`
 
@@ -117,10 +117,28 @@ export function getMe(): Promise<unknown> {
 
 /**
  * PATCH /api/v1/auth/me/
- * Update current user profile (supports multipart for profile picture).
+ * Update current user profile (JSON: full_name, email).
  */
 export function patchMe(payload: unknown): Promise<unknown> {
   return patch<unknown>(authPath('me/'), payload)
+}
+
+/**
+ * PATCH /api/v1/auth/me/
+ * Update profile picture (multipart). FormData must include key 'profile_picture' with File.
+ */
+export function patchMeProfilePicture(file: File): Promise<unknown> {
+  const formData = new FormData()
+  formData.append('profile_picture', file, file.name || `profile_${Date.now()}.jpg`)
+  return patchMultipart<unknown>(authPath('me/'), formData)
+}
+
+/**
+ * PATCH /api/v1/auth/me/
+ * Remove profile picture. Body: { remove_profile_picture: 'true' }.
+ */
+export function patchMeRemoveProfilePicture(): Promise<unknown> {
+  return patch<unknown>(authPath('me/'), { remove_profile_picture: 'true' })
 }
 
 /**

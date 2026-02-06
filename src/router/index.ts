@@ -13,9 +13,11 @@ import EditEventView from '@/views/EditEventView.vue'
 import EventChatView from '@/views/EventChatView.vue'
 import CalendarView from '@/views/CalendarView.vue'
 import ProfileView from '@/views/ProfileView.vue'
+import EditProfileView from '@/views/EditProfileView.vue'
 import WalletView from '@/views/WalletView.vue'
 import TransactionsView from '@/views/TransactionsView.vue'
 import SubscriptionsView from '@/views/SubscriptionsView.vue'
+import PublicEventDetailView from '@/views/PublicEventDetailView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -24,6 +26,11 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
+    },
+    {
+      path: '/event/:id',
+      name: 'event-public',
+      component: PublicEventDetailView,
     },
     {
       path: '/login',
@@ -100,6 +107,12 @@ const router = createRouter({
       path: '/profile',
       name: 'profile',
       component: ProfileView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/profile/edit',
+      name: 'profile-edit',
+      component: EditProfileView,
       meta: { requiresAuth: true },
     },
     {

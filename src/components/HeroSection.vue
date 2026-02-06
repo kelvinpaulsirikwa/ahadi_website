@@ -1,17 +1,65 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { ref, onMounted } from 'vue'
+import { fetchEventByJoinCode } from '@/api/event'
+import JoinDialog from '@/components/JoinDialog.vue'
+import type { PublicEvent } from '@/types/events'
 
 const router = useRouter()
 const isLoaded = ref(false)
 
+const showCodeModal = ref(false)
+const joinCodeInput = ref('')
+const codeError = ref('')
+const codeLoading = ref(false)
+const eventForJoin = ref<PublicEvent | null>(null)
+const showJoinModal = ref(false)
+
 function onJoinWithCode() {
-  // TODO: open join-by-code dialog
-  console.log('Join with code')
+  joinCodeInput.value = ''
+  codeError.value = ''
+  showCodeModal.value = true
 }
 
 function onCreateEvent() {
   router.push({ name: 'home' }) // TODO: replace with login route when available
+}
+
+async function onCodeSubmit() {
+  const code = joinCodeInput.value?.trim().toUpperCase()
+  if (!code) {
+    codeError.value = 'Please enter an event code.'
+    return
+  }
+  codeLoading.value = true
+  codeError.value = ''
+  try {
+    const res = await fetchEventByJoinCode(code) as { data?: PublicEvent; success?: boolean } | PublicEvent
+    const event = (res && typeof res === 'object' && 'data' in res && res.data)
+      ? res.data
+      : (res as PublicEvent)
+    if (event && (event as PublicEvent).join_code) {
+      eventForJoin.value = event as PublicEvent
+      showCodeModal.value = false
+      showJoinModal.value = true
+    } else {
+      codeError.value = 'Event not found. Check the code and try again.'
+    }
+  } catch {
+    codeError.value = 'Event not found. Check the code and try again.'
+  } finally {
+    codeLoading.value = false
+  }
+}
+
+function closeCodeModal() {
+  showCodeModal.value = false
+  codeError.value = ''
+}
+
+function closeJoinModal() {
+  showJoinModal.value = false
+  eventForJoin.value = null
 }
 
 onMounted(() => {
@@ -134,6 +182,38 @@ onMounted(() => {
       </div>
     </div>
   </section>
+
+  <!-- Join with Code: enter code then open join form -->
+  <Teleport to="body">
+    <Transition name="modal">
+      <div v-if="showCodeModal" class="code-modal-backdrop" @click.self="closeCodeModal">
+        <div class="code-modal-box">
+          <h3 class="code-modal-title">Join Event</h3>
+          <p class="code-modal-text">Enter the event code shared by the organizer.</p>
+          <input
+            v-model="joinCodeInput"
+            type="text"
+            class="code-modal-input"
+            placeholder="e.g. ABC123"
+            @keydown.enter="onCodeSubmit"
+          />
+          <p v-if="codeError" class="code-modal-error">{{ codeError }}</p>
+          <div class="code-modal-actions">
+            <button type="button" class="code-modal-btn secondary" @click="closeCodeModal">Cancel</button>
+            <button type="button" class="code-modal-btn primary" :disabled="codeLoading" @click="onCodeSubmit">
+              {{ codeLoading ? 'Looking up…' : 'Continue' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+    <JoinDialog
+      :event="eventForJoin"
+      :open="showJoinModal"
+      @close="closeJoinModal"
+      @success="closeJoinModal"
+    />
+  </Teleport>
 </template>
 
 <style scoped>
@@ -721,5 +801,86 @@ onMounted(() => {
     flex: 1 1 calc(50% - 6px);
     min-width: 0;
   }
+}
+
+/* Join with Code modal */
+.code-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.code-modal-box {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+}
+.code-modal-title {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.code-modal-text {
+  margin: 0 0 16px;
+  font-size: 0.9375rem;
+  color: var(--color-text-muted, #666);
+}
+.code-modal-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border, #e5e5e5);
+  border-radius: 12px;
+  font-size: 1.125rem;
+  letter-spacing: 0.1em;
+  text-align: center;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+}
+.code-modal-error {
+  margin: 0 0 12px;
+  font-size: 0.875rem;
+  color: #dc2626;
+}
+.code-modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+.code-modal-btn {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+}
+.code-modal-btn.secondary {
+  background: #f3f4f6;
+  color: #374151;
+}
+.code-modal-btn.primary {
+  background: var(--color-accent, #0a0a0a);
+  color: #fff;
+}
+.code-modal-btn.primary:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.2s ease;
+}
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
 }
 </style>
