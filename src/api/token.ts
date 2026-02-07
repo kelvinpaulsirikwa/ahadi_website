@@ -4,6 +4,7 @@
  */
 
 const ACCESS_KEY = 'ahadi_access'
+const REFRESH_KEY = 'ahadi_refresh'
 
 export function getAccessToken(): string | null {
   if (typeof localStorage === 'undefined') return null
@@ -19,6 +20,28 @@ export function setAccessToken(token: string): void {
 export function clearAccessToken(): void {
   if (typeof localStorage === 'undefined') return
   localStorage.removeItem(ACCESS_KEY)
+}
+
+export function getRefreshToken(): string | null {
+  if (typeof localStorage === 'undefined') return null
+  const t = localStorage.getItem(REFRESH_KEY)
+  return t != null && t !== '' ? t : null
+}
+
+export function setRefreshToken(token: string): void {
+  if (typeof localStorage === 'undefined') return
+  localStorage.setItem(REFRESH_KEY, token)
+}
+
+export function clearRefreshToken(): void {
+  if (typeof localStorage === 'undefined') return
+  localStorage.removeItem(REFRESH_KEY)
+}
+
+/** Wipe access and refresh tokens (e.g. on logout or after failed refresh). */
+export function clearAllTokens(): void {
+  clearAccessToken()
+  clearRefreshToken()
 }
 
 /**

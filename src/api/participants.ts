@@ -4,6 +4,9 @@
  */
 
 import { get, post, put, patch, del } from './client'
+import { getParticipantsPrefix } from '@/api/env'
+
+const participantsPath = (suffix: string) => `${getParticipantsPrefix()}/${suffix}`
 
 // --- Types (from Swagger schema) ---
 
@@ -69,7 +72,7 @@ export function fetchParticipants(params?: {
  * Create participant (201).
  */
 export function createParticipant(payload: ParticipantCreatePayload): Promise<Participant> {
-  return post<Participant>('participants/', payload)
+  return post<Participant>(participantsPath(''), payload)
 }
 
 /**
@@ -77,7 +80,7 @@ export function createParticipant(payload: ParticipantCreatePayload): Promise<Pa
  * Get participant by id.
  */
 export function fetchParticipantById(id: number): Promise<Participant> {
-  return get<Participant>(`participants/${id}/`)
+  return get<Participant>(participantsPath(`${id}/`))
 }
 
 /**
@@ -85,7 +88,7 @@ export function fetchParticipantById(id: number): Promise<Participant> {
  * Full update.
  */
 export function updateParticipant(id: number, payload: ParticipantUpdatePayload): Promise<Participant> {
-  return put<Participant>(`participants/${id}/`, payload)
+  return put<Participant>(participantsPath(`${id}/`), payload)
 }
 
 /**
@@ -93,7 +96,7 @@ export function updateParticipant(id: number, payload: ParticipantUpdatePayload)
  * Partial update.
  */
 export function patchParticipant(id: number, payload: ParticipantUpdatePayload): Promise<Participant> {
-  return patch<Participant>(`participants/${id}/`, payload)
+  return patch<Participant>(participantsPath(`${id}/`), payload)
 }
 
 /**
@@ -101,5 +104,5 @@ export function patchParticipant(id: number, payload: ParticipantUpdatePayload):
  * Delete participant (204).
  */
 export function deleteParticipant(id: number): Promise<void> {
-  return del<void>(`participants/${id}/`)
+  return del<void>(participantsPath(`${id}/`))
 }

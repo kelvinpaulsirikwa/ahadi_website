@@ -4,6 +4,9 @@
  */
 
 import { post } from './client'
+import { getWhatsappPrefix } from '@/api/env'
+
+const whatsappPath = (suffix: string) => `${getWhatsappPrefix()}/${suffix}`
 
 // --- Payload types ---
 
@@ -49,7 +52,7 @@ export interface WhatsAppVerifyOtpResponse {
  * Returns: { success, message, expires_in, phone_number }
  */
 export function requestWhatsAppOtp(payload: WhatsAppRequestOtpPayload): Promise<WhatsAppRequestOtpResponse> {
-  return post<WhatsAppRequestOtpResponse>('whatsapp/auth/request-otp/', payload)
+  return post<WhatsAppRequestOtpResponse>(whatsappPath('auth/request-otp/'), payload)
 }
 
 /**
@@ -58,7 +61,7 @@ export function requestWhatsAppOtp(payload: WhatsAppRequestOtpPayload): Promise<
  * Body: { phone_number: "255765551397" }
  */
 export function resendWhatsAppOtp(payload: WhatsAppResendOtpPayload): Promise<unknown> {
-  return post<unknown>('whatsapp/auth/resend-otp/', payload)
+  return post<unknown>(whatsappPath('auth/resend-otp/'), payload)
 }
 
 /**
@@ -68,5 +71,5 @@ export function resendWhatsAppOtp(payload: WhatsAppResendOtpPayload): Promise<un
  * Returns: { success, message, user, access, refresh, is_new_user }
  */
 export function verifyWhatsAppOtp(payload: WhatsAppVerifyOtpPayload): Promise<WhatsAppVerifyOtpResponse> {
-  return post<WhatsAppVerifyOtpResponse>('whatsapp/auth/verify-otp/', payload)
+  return post<WhatsAppVerifyOtpResponse>(whatsappPath('auth/verify-otp/'), payload)
 }

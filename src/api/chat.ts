@@ -4,6 +4,9 @@
  */
 
 import { get, getWithAuth, post } from './client'
+import { getChatPrefix } from '@/api/env'
+
+const chatPath = (suffix: string) => `${getChatPrefix()}/${suffix}`
 
 // --- Types (from Swagger schema) ---
 
@@ -82,7 +85,7 @@ export function sendEventChatMessage(
   eventId: number,
   payload: SendChatMessagePayload
 ): Promise<ChatMessage> {
-  return post<ChatMessage>(`chat/events/${eventId}/messages/`, payload)
+  return post<ChatMessage>(chatPath(`events/${eventId}/messages/`), payload)
 }
 
 /**
@@ -90,7 +93,7 @@ export function sendEventChatMessage(
  * Mark all messages in the chat room as read.
  */
 export function markEventChatRead(eventId: number): Promise<unknown> {
-  return post<unknown>(`chat/events/${eventId}/read/`, {})
+  return post<unknown>(chatPath(`events/${eventId}/read/`), {})
 }
 
 /**
@@ -98,7 +101,7 @@ export function markEventChatRead(eventId: number): Promise<unknown> {
  * Get chat room details for an event.
  */
 export function fetchEventChatRoom(eventId: number): Promise<ChatRoom> {
-  return getWithAuth<ChatRoom>(`chat/events/${eventId}/room/`)
+  return getWithAuth<ChatRoom>(chatPath(`events/${eventId}/room/`))
 }
 
 /**
@@ -106,5 +109,5 @@ export function fetchEventChatRoom(eventId: number): Promise<ChatRoom> {
  * Get unread message count for the event chat.
  */
 export function fetchEventChatUnread(eventId: number): Promise<unknown> {
-  return getWithAuth<unknown>(`chat/events/${eventId}/unread/`)
+  return getWithAuth<unknown>(chatPath(`events/${eventId}/unread/`))
 }

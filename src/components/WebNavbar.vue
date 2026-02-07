@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/auth'
 import { logoutApi } from '@/api/auth'
+import { getRefreshToken } from '@/api/token'
 import { APP_NAME } from '@/config/app'
 
 const router = useRouter()
@@ -57,7 +58,7 @@ function onProfile() {
 }
 
 async function onSignOut() {
-  const refresh = typeof localStorage !== 'undefined' ? localStorage.getItem('ahadi_refresh') : null
+  const refresh = getRefreshToken()
   if (refresh) {
     try {
       await logoutApi(refresh)
@@ -152,26 +153,109 @@ function onSearchSubmit() {
       </button>
     </div>
 
-    <!-- Mobile menu (slide-down when hamburger open) -->
-    <Transition name="mobile-menu">
-      <div v-show="menuOpen" class="mobile-menu" role="dialog" aria-label="Navigation menu">
-        <nav class="mobile-nav">
-          <button type="button" class="mobile-nav-link" @click="goToHome">
-            Dashboard
-          </button>
-          <button type="button" class="mobile-nav-link" @click="scrollToSection(sectionIds.discover)">
-            Discover
-          </button>
-          <button type="button" class="mobile-nav-link" @click="scrollToSection(sectionIds.howItWorks)">
-            How It Works
-          </button>
-          <button type="button" class="mobile-nav-link" @click="scrollToSection(sectionIds.pricing)">
-            Pricing
-          </button>
-          <button type="button" class="mobile-nav-link" @click="scrollToSection(sectionIds.about)">
-            About
-          </button>
-        </nav>
+    <!-- Mobile menu (drawer from right) -->
+    <Transition name="mobile-drawer">
+      <div
+        v-show="menuOpen"
+        class="mobile-drawer-overlay"
+        role="dialog"
+        aria-label="Navigation menu"
+        @click.self="menuOpen = false"
+      >
+        <div class="mobile-drawer-panel">
+          <!-- Header: logo + title + close X -->
+          <div class="mobile-drawer-header">
+            <div class="mobile-drawer-brand">
+              <img src="/images/static_images/ahadi_logo.png" alt="" class="mobile-drawer-logo" />
+              <div class="mobile-drawer-titles">
+                <span class="mobile-drawer-title">{{ APP_NAME }}</span>
+                <span class="mobile-drawer-tagline">Events</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="mobile-drawer-close"
+              aria-label="Close menu"
+              @click="menuOpen = false"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="mobile-drawer-body">
+          <!-- When logged in: circular avatar + username + email -->
+          <div v-if="isLoggedIn" class="mobile-drawer-user">
+            <div class="mobile-drawer-avatar">{{ userInitial }}</div>
+            <div class="mobile-drawer-user-info">
+              <span class="mobile-drawer-username">{{ user?.full_name || user?.phone || 'User' }}</span>
+              <span v-if="user?.email" class="mobile-drawer-email">{{ user.email }}</span>
+            </div>
+          </div>
+
+          <!-- When logged in: account list (no dropdown) -->
+          <nav v-if="isLoggedIn" class="mobile-nav mobile-nav-account">
+            <button type="button" class="mobile-nav-link" @click="onMyEvents(); menuOpen = false">
+              <span class="mobile-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+              <span>My Events</span>
+            </button>
+            <button type="button" class="mobile-nav-link" @click="onInbox(); menuOpen = false">
+              <span class="mobile-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+              <span>Inbox</span>
+            </button>
+            <button type="button" class="mobile-nav-link" @click="onCalendar(); menuOpen = false">
+              <span class="mobile-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+              <span>Calendar</span>
+            </button>
+            <button type="button" class="mobile-nav-link" @click="onDashboard(); menuOpen = false">
+              <span class="mobile-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg></span>
+              <span>Dashboard</span>
+            </button>
+            <button type="button" class="mobile-nav-link" @click="onProfile(); menuOpen = false">
+              <span class="mobile-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg></span>
+              <span>Profile</span>
+            </button>
+            <button type="button" class="mobile-nav-link mobile-nav-link-danger" @click="onSignOut">
+              <span class="mobile-nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+              <span>Sign Out</span>
+            </button>
+          </nav>
+
+          <!-- Main nav links with icons and separators -->
+          <nav class="mobile-nav">
+            <button type="button" class="mobile-nav-link" @click="goToHome">
+              <span class="mobile-nav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+              </span>
+              <span>Dashboard</span>
+            </button>
+            <button type="button" class="mobile-nav-link" @click="scrollToSection(sectionIds.discover)">
+              <span class="mobile-nav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m16.24 7.76 2.83-2.83"/><path d="m7.76 16.24-2.83 2.83"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg>
+              </span>
+              <span>Discover</span>
+            </button>
+            <button type="button" class="mobile-nav-link" @click="scrollToSection(sectionIds.howItWorks)">
+              <span class="mobile-nav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              </span>
+              <span>How It Works</span>
+            </button>
+            <button type="button" class="mobile-nav-link" @click="scrollToSection(sectionIds.pricing)">
+              <span class="mobile-nav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+              </span>
+              <span>Pricing</span>
+            </button>
+            <button type="button" class="mobile-nav-link" @click="scrollToSection(sectionIds.about)">
+              <span class="mobile-nav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              </span>
+              <span>About</span>
+            </button>
+          </nav>
         <div class="mobile-search-wrap">
           <div v-if="isSearching" class="search-box mobile-search-box">
             <span class="search-icon">
@@ -202,50 +286,22 @@ function onSearchSubmit() {
             <span>Search</span>
           </button>
         </div>
-        <div class="mobile-auth">
-          <template v-if="isLoggedIn">
-            <div class="account-trigger-wrap">
-              <button type="button" class="btn-account-trigger" @click.stop="toggleAccountMenu">
-                <span class="account-avatar">{{ userInitial }}</span>
-                <svg class="account-chevron" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="m6 9 6 6 6-6" />
-                </svg>
-              </button>
-              <Transition name="account-menu">
-                <div v-show="showAccountMenu" class="account-dropdown" role="menu">
-                  <button type="button" class="account-item" role="menuitem" @click="onMyEvents">
-                    <svg class="account-item-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    <span>My Events</span>
-                  </button>
-                  <button type="button" class="account-item" role="menuitem" @click="onInbox">
-                    <svg class="account-item-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                    <span>Inbox</span>
-                  </button>
-                  <button type="button" class="account-item" role="menuitem" @click="onCalendar">
-                    <svg class="account-item-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    <span>Calendar</span>
-                  </button>
-                  <button type="button" class="account-item" role="menuitem" @click="onDashboard">
-                    <svg class="account-item-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-                    <span>Dashboard</span>
-                  </button>
-                  <button type="button" class="account-item" role="menuitem" @click="onProfile">
-                    <svg class="account-item-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
-                    <span>Profile</span>
-                  </button>
-                  <div class="account-divider" />
-                  <button type="button" class="account-item account-item-danger" role="menuitem" @click="onSignOut">
-                    <svg class="account-item-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                    <span>Sign Out</span>
-                  </button>
-                </div>
-              </Transition>
+        <div v-if="!isLoggedIn" class="mobile-auth">
+          <button type="button" class="btn-log-in" @click="router.push({ name: 'login' })">Log In</button>
+          <button type="button" class="btn-sign-up" @click="router.push({ name: 'login' })">Sign Up</button>
+        </div>
+
+          </div>
+          <!-- Footer (dark strip like reference) -->
+          <div class="mobile-drawer-footer">
+            <div class="mobile-drawer-footer-title">Follow us</div>
+            <div class="mobile-drawer-social">
+              <a href="#" class="mobile-drawer-social-btn" aria-label="Twitter"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></a>
+              <a href="#" class="mobile-drawer-social-btn" aria-label="Facebook"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+              <a href="#" class="mobile-drawer-social-btn" aria-label="Instagram"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
             </div>
-          </template>
-          <template v-else>
-            <button type="button" class="btn-log-in" @click="router.push({ name: 'login' })">Log In</button>
-            <button type="button" class="btn-sign-up" @click="router.push({ name: 'login' })">Sign Up</button>
-          </template>
+            <p class="mobile-drawer-tagline-footer">Event contributions made simple</p>
+          </div>
         </div>
       </div>
     </Transition>
@@ -475,65 +531,232 @@ function onSearchSubmit() {
   border-radius: 1px;
 }
 
-/* ----- Mobile menu (slide-down) ----- */
-.mobile-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: #1a283b;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 16px 16px 24px;
-  padding-bottom: max(24px, env(safe-area-inset-bottom));
+/* ----- Mobile menu (drawer from right to left) ----- */
+.mobile-drawer-overlay {
+  position: fixed;
+  inset: 0;
   z-index: 100;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(0, 0, 0, 0.4);
 }
 
-.mobile-menu-enter-active,
-.mobile-menu-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+.mobile-drawer-panel {
+  width: min(320px, 85vw);
+  max-width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #f3f4f6;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.25);
 }
 
-.mobile-menu-enter-from,
-.mobile-menu-leave-to {
+.mobile-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.mobile-drawer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mobile-drawer-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.mobile-drawer-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.mobile-drawer-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e3a5f;
+  line-height: 1.2;
+}
+
+.mobile-drawer-tagline {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.mobile-drawer-close {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  color: #374151;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.mobile-drawer-close:hover {
+  background: #f9fafb;
+  color: #111827;
+}
+
+.mobile-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.mobile-drawer-user {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  margin: 0 16px 12px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.mobile-drawer-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #1e3a5f;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.mobile-drawer-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mobile-drawer-username {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.mobile-drawer-email {
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.mobile-drawer-enter-active,
+.mobile-drawer-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.mobile-drawer-enter-active .mobile-drawer-panel,
+.mobile-drawer-leave-active .mobile-drawer-panel {
+  transition: transform 0.25s ease;
+}
+
+.mobile-drawer-enter-from,
+.mobile-drawer-leave-to {
   opacity: 0;
-  transform: translateY(-8px);
+}
+
+.mobile-drawer-enter-from .mobile-drawer-panel,
+.mobile-drawer-leave-to .mobile-drawer-panel {
+  transform: translateX(100%);
 }
 
 .mobile-nav {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-bottom: 16px;
+  margin-bottom: 0;
+  padding: 0 16px;
+  background: #f3f4f6;
 }
 
 .mobile-nav-link {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   width: 100%;
-  padding: 12px 0;
-  font-size: 16px;
-  font-weight: 400;
-  color: #fff;
+  padding: 14px 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: #374151;
   background: none;
   border: none;
+  border-bottom: 1px solid #e5e7eb;
   text-align: left;
   cursor: pointer;
-  border-radius: 8px;
+}
+
+.mobile-nav-link:last-of-type {
+  border-bottom: none;
 }
 
 .mobile-nav-link:hover {
-  background: rgba(255, 255, 255, 0.08);
+  color: #1e3a5f;
+}
+
+.mobile-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+}
+
+.mobile-nav-link:hover .mobile-nav-icon {
+  color: #1e3a5f;
+}
+
+.mobile-nav-account {
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+.mobile-nav-link-danger {
+  color: #dc2626;
+}
+
+.mobile-nav-link-danger .mobile-nav-icon {
+  color: #dc2626;
+}
+
+.mobile-nav-link-danger:hover {
+  color: #b91c1c;
+}
+
+.mobile-nav-link-danger:hover .mobile-nav-icon {
+  color: #b91c1c;
 }
 
 .mobile-search-wrap {
-  margin-bottom: 16px;
+  margin: 0 16px 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
 }
 
 .mobile-search-box,
 .mobile-search-btn {
   width: 100%;
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.9);
+  background: #fff;
+  color: #374151;
+  border: 1px solid #e5e7eb;
 }
 
 .mobile-search-btn {
@@ -541,33 +764,83 @@ function onSearchSubmit() {
 }
 
 .mobile-search-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: #f9fafb;
+  border-color: #d1d5db;
 }
 
 .mobile-auth {
   display: flex;
   gap: 12px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 16px 16px;
+  border-top: 1px solid #e5e7eb;
+  background: #f3f4f6;
+  flex-shrink: 0;
 }
 
 .mobile-auth .btn-log-in {
-  color: #fff;
+  color: #374151;
 }
 
 .mobile-auth .btn-log-in:hover {
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(255, 255, 255, 0.1);
+  color: #1e3a5f;
+  background: #e5e7eb;
 }
 
 .mobile-auth .btn-sign-up {
   flex: 1;
-  background: #fff;
-  color: #1a283b;
+  background: #1e3a5f;
+  color: #fff;
 }
 
 .mobile-auth .btn-sign-up:hover {
-  background: rgba(255, 255, 255, 0.95);
+  background: #162942;
+}
+
+/* Drawer footer (dark strip) */
+.mobile-drawer-footer {
+  background: #1e3a5f;
+  color: #fff;
+  padding: 20px 16px;
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+  flex-shrink: 0;
+}
+
+.mobile-drawer-footer-title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 12px;
+}
+
+.mobile-drawer-social {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.mobile-drawer-social-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border-radius: 10px;
+}
+
+.mobile-drawer-social-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.mobile-drawer-tagline-footer {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-style: italic;
 }
 
 /* ----- Desktop navbar (hidden on mobile) ----- */

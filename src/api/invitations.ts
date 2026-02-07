@@ -4,6 +4,9 @@
  */
 
 import { get, post, put, patch, del } from './client'
+import { getInvitationsPrefix } from '@/api/env'
+
+const invitationsPath = (suffix: string) => `${getInvitationsPrefix()}/${suffix}`
 
 // --- Types (from Swagger schema) ---
 
@@ -59,7 +62,7 @@ export function fetchInvitations(params?: { page?: number }): Promise<PaginatedI
   const search: Record<string, string> = {}
   if (params?.page != null) search.page = String(params.page)
   return get<PaginatedInvitationsResponse>(
-    'invitations/',
+    invitationsPath(''),
     Object.keys(search).length ? search : undefined
   )
 }
@@ -69,7 +72,7 @@ export function fetchInvitations(params?: { page?: number }): Promise<PaginatedI
  * Create invitation (201).
  */
 export function createInvitation(payload: InvitationCreatePayload): Promise<Invitation> {
-  return post<Invitation>('invitations/', payload)
+  return post<Invitation>(invitationsPath(''), payload)
 }
 
 /**
@@ -77,7 +80,7 @@ export function createInvitation(payload: InvitationCreatePayload): Promise<Invi
  * Get invitation by id.
  */
 export function fetchInvitationById(id: number): Promise<Invitation> {
-  return get<Invitation>(`invitations/${id}/`)
+  return get<Invitation>(invitationsPath(`${id}/`))
 }
 
 /**
@@ -93,7 +96,7 @@ export function updateInvitation(id: number, payload: InvitationUpdatePayload): 
  * Partial update.
  */
 export function patchInvitation(id: number, payload: InvitationUpdatePayload): Promise<Invitation> {
-  return patch<Invitation>(`invitations/${id}/`, payload)
+  return patch<Invitation>(invitationsPath(`${id}/`), payload)
 }
 
 /**
@@ -101,7 +104,7 @@ export function patchInvitation(id: number, payload: InvitationUpdatePayload): P
  * Delete invitation (204).
  */
 export function deleteInvitation(id: number): Promise<void> {
-  return del<void>(`invitations/${id}/`)
+  return del<void>(invitationsPath(`${id}/`))
 }
 
 /**
@@ -109,5 +112,5 @@ export function deleteInvitation(id: number): Promise<void> {
  * Send invitation via specified channel.
  */
 export function sendInvitation(id: number, body?: InvitationUpdatePayload): Promise<Invitation> {
-  return post<Invitation>(`invitations/${id}/send/`, body ?? {})
+  return post<Invitation>(invitationsPath(`${id}/send/`), body ?? {})
 }

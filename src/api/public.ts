@@ -4,13 +4,16 @@
  */
 
 import { get } from './client'
+import { getPublicPrefix } from '@/api/env'
+
+const publicPath = (suffix: string) => `${getPublicPrefix()}/${suffix}`
 
 /**
  * GET /api/v1/public/config/
  * Get public app configuration. No auth required.
  */
 export function fetchPublicConfig(): Promise<unknown> {
-  return get<unknown>('public/config/')
+  return get<unknown>(publicPath('config/'))
 }
 
 /**
@@ -18,7 +21,7 @@ export function fetchPublicConfig(): Promise<unknown> {
  * Get basic app information for landing page. No auth required.
  */
 export function fetchPublicInfo(): Promise<unknown> {
-  return get<unknown>('public/info/')
+  return get<unknown>(publicPath('info/'))
 }
 
 /**
@@ -26,5 +29,5 @@ export function fetchPublicInfo(): Promise<unknown> {
  * Get all active subscription plans. No auth required.
  */
 export function fetchPublicPlans(): Promise<unknown> {
-  return get<unknown>('public/plans/')
+  return get<unknown>(publicPath('plans/'))
 }

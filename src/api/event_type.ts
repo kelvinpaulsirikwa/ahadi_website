@@ -1,6 +1,9 @@
 import { get } from './client'
+import { getEventTypesPrefix } from '@/api/env'
 import type { EventType } from '@/types/events'
 import type { PaginatedResponse } from '@/types/events'
+
+const eventTypesPath = (suffix: string) => `${getEventTypesPrefix()}/${suffix}`
 
 /**
  * GET /api/v1/event-types/
@@ -11,7 +14,7 @@ export function fetchEventTypes(params?: { page?: number }): Promise<PaginatedRe
   const search: Record<string, string> = {}
   if (params?.page != null) search.page = String(params.page)
   return get<PaginatedResponse<EventType>>(
-    'event-types/',
+    eventTypesPath(''),
     Object.keys(search).length ? search : undefined
   )
 }
@@ -21,5 +24,5 @@ export function fetchEventTypes(params?: { page?: number }): Promise<PaginatedRe
  * Retrieve a single event type by id.
  */
 export function fetchEventTypeById(id: number): Promise<EventType> {
-  return get<EventType>(`event-types/${id}/`)
+  return get<EventType>(eventTypesPath(`${id}/`))
 }

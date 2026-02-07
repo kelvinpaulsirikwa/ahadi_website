@@ -4,6 +4,9 @@
  */
 
 import { get, getWithAuth, post } from './client'
+import { getDirectMessagesPrefix } from '@/api/env'
+
+const dmPath = (suffix: string) => `${getDirectMessagesPrefix()}/${suffix}`
 
 // --- Payload types (from spec) ---
 
@@ -24,7 +27,7 @@ export interface SendDirectMessagePayload {
  * Returns: 201
  */
 export function sendDirectMessage(payload: SendDirectMessagePayload): Promise<unknown> {
-  return post<unknown>('direct-messages/', payload)
+  return post<unknown>(dmPath(''), payload)
 }
 
 /**
@@ -32,7 +35,7 @@ export function sendDirectMessage(payload: SendDirectMessagePayload): Promise<un
  * Get conversation history with a user (messages where current user is sender/recipient and user_id is the other party).
  */
 export function fetchConversation(userId: number | string): Promise<unknown> {
-  return getWithAuth<unknown>(`direct-messages/conversation/${encodeURIComponent(String(userId))}/`)
+  return getWithAuth<unknown>(dmPath(`conversation/${encodeURIComponent(String(userId))}/`))
 }
 
 /**
@@ -40,5 +43,5 @@ export function fetchConversation(userId: number | string): Promise<unknown> {
  * Mark all messages from a user as read.
  */
 export function markConversationRead(userId: number | string): Promise<unknown> {
-  return post<unknown>(`direct-messages/conversation/${encodeURIComponent(String(userId))}/read/`, {})
+  return post<unknown>(dmPath(`conversation/${encodeURIComponent(String(userId))}/read/`), {})
 }

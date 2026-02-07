@@ -4,8 +4,11 @@
  */
 
 import { get, getWithAuth, post, put, patch, del } from './client'
+import { getEventsPrefix } from '@/api/env'
 import type { PublicEvent } from '@/types/events'
 import type { PaginatedResponse } from '@/types/events'
+
+const eventsPath = (suffix: string) => `${getEventsPrefix()}/${suffix}`
 
 // --- List & CRUD params / payloads ---
 
@@ -52,61 +55,61 @@ export function fetchEvents(params?: EventsListParams): Promise<PaginatedRespons
   if (params?.ordering != null) search.ordering = params.ordering
   if (params?.page != null) search.page = String(params.page)
   if (params?.search != null && params.search !== '') search.search = params.search
-  return get<PaginatedResponse<PublicEvent>>('events/', Object.keys(search).length ? search : undefined)
+  return get<PaginatedResponse<PublicEvent>>(eventsPath(''), Object.keys(search).length ? search : undefined)
 }
 
 /** POST /api/v1/events/ – Create event (auth required). */
 export function createEvent(payload: EventCreatePayload): Promise<PublicEvent> {
-  return post<PublicEvent>('events/', payload)
+  return post<PublicEvent>(eventsPath(''), payload)
 }
 
 /** GET /api/v1/events/{id}/ – Event detail. */
 export function fetchEventById(id: number): Promise<PublicEvent> {
-  return get<PublicEvent>(`events/${id}/`)
+  return get<PublicEvent>(eventsPath(`${id}/`))
 }
 
 /** PUT /api/v1/events/{id}/ – Full update (owner/admin only). */
 export function updateEvent(id: number, payload: EventUpdatePayload): Promise<PublicEvent> {
-  return put<PublicEvent>(`events/${id}/`, payload)
+  return put<PublicEvent>(eventsPath(`${id}/`), payload)
 }
 
 /** PATCH /api/v1/events/{id}/ – Partial update (owner/admin only). */
 export function patchEvent(id: number, payload: EventUpdatePayload): Promise<PublicEvent> {
-  return patch<PublicEvent>(`events/${id}/`, payload)
+  return patch<PublicEvent>(eventsPath(`${id}/`), payload)
 }
 
 /** DELETE /api/v1/events/{id}/ – Delete event (owner only). Returns 204. */
 export function deleteEvent(id: number): Promise<void> {
-  return del<void>(`events/${id}/`)
+  return del<void>(eventsPath(`${id}/`))
 }
 
 // --- Nested: send invitation ---
 
 /** POST /api/v1/events/{event_id}/send-invitation/ – Send invitation card to participants. */
 export function sendEventInvitation(eventId: number, payload?: SendInvitationPayload): Promise<void> {
-  return post<void>(`events/${eventId}/send-invitation/`, payload ?? {})
+  return post<void>(eventsPath(`${eventId}/send-invitation/`), payload ?? {})
 }
 
 // --- Nested: report, participants, contributions, messages, announcements ---
 
 /** GET /api/v1/events/{id}/report/ – Event report/analytics. */
 export function fetchEventReport(id: number): Promise<unknown> {
-  return get<unknown>(`events/${id}/report/`)
+  return get<unknown>(eventsPath(`${id}/report/`))
 }
 
 /** GET /api/v1/events/{id}/participants/ – List participants. */
 export function fetchEventParticipants(id: number): Promise<unknown> {
-  return get<unknown>(`events/${id}/participants/`)
+  return get<unknown>(eventsPath(`${id}/participants/`))
 }
 
 /** GET /api/v1/events/{id}/contributions/ – List contributions. */
 export function fetchEventContributions(id: number): Promise<unknown> {
-  return get<unknown>(`events/${id}/contributions/`)
+  return get<unknown>(eventsPath(`${id}/contributions/`))
 }
 
 /** GET /api/v1/events/{id}/messages/ – List chat messages. Backend may return { data: [...] }, { results: [...] }, { messages: [...] }, or a direct array. */
 export async function fetchEventMessages(id: number): Promise<unknown[]> {
-  const res = await getWithAuth<Record<string, unknown> | unknown[]>(`events/${id}/messages/`)
+  const res = await getWithAuth<Record<string, unknown> | unknown[]>(eventsPath(`${id}/messages/`))
   if (Array.isArray(res)) return res
   const r = res as Record<string, unknown>
   for (const key of ['data', 'results', 'messages']) {
@@ -118,7 +121,7 @@ export async function fetchEventMessages(id: number): Promise<unknown[]> {
 
 /** GET /api/v1/events/{id}/announcements/ – List announcements. */
 export function fetchEventAnnouncements(id: number): Promise<unknown> {
-  return get<unknown>(`events/${id}/announcements/`)
+  return get<unknown>(eventsPath(`${id}/announcements/`))
 }
 
 // --- My events (auth required) ---
@@ -139,7 +142,7 @@ export async function fetchMyEvents(params?: { page?: number }): Promise<Paginat
   const search: Record<string, string> = {}
   if (params?.page != null) search.page = String(params.page)
   const res = await getWithAuth<MyEventsRawResponse>(
-    'events/my_events/',
+    eventsPath('my_events/'),
     Object.keys(search).length ? search : undefined
   )
   if (Array.isArray(res.data) && res.results == null) {
@@ -162,34 +165,34 @@ export async function fetchMyEvents(params?: { page?: number }): Promise<Paginat
 
 /** GET /api/v1/events/{id}/admins/ – List event admins. */
 export function fetchEventAdmins(id: number): Promise<unknown> {
-  return get<unknown>(`events/${id}/admins/`)
+  return get<unknown>(eventsPath(`${id}/admins/`))
 }
 
 /** POST /api/v1/events/{id}/admins/ – Add event admin (body per backend). */
 export function addEventAdmin(id: number, body: unknown): Promise<unknown> {
-  return post<unknown>(`events/${id}/admins/`, body)
+  return post<unknown>(eventsPath(`${id}/admins/`), body)
 }
 
 /** DELETE /api/v1/events/{id}/admins/ – Remove event admin (204). */
 export function removeEventAdmins(id: number): Promise<void> {
-  return del<void>(`events/${id}/admins/`)
+  return del<void>(eventsPath(`${id}/admins/`))
 }
 
 // --- Public: contribute & join by code ---
 
 /** GET /api/v1/events/contribute/{join_code}/ – Event details for public contribution page. */
 export function fetchEventByContributeCode(joinCode: string): Promise<PublicEvent | unknown> {
-  return get<PublicEvent | unknown>(`events/contribute/${encodeURIComponent(joinCode)}/`)
+  return get<PublicEvent | unknown>(eventsPath(`contribute/${encodeURIComponent(joinCode)}/`))
 }
 
 /** GET /api/v1/events/join/{join_code}/ – Public event details by join code. */
 export function fetchEventByJoinCode(joinCode: string): Promise<PublicEvent | unknown> {
-  return get<PublicEvent | unknown>(`events/join/${encodeURIComponent(joinCode)}/`)
+  return get<PublicEvent | unknown>(eventsPath(`join/${encodeURIComponent(joinCode)}/`))
 }
 
 /** POST /api/v1/events/join/{join_code}/register/ – Join event using public join code. */
 export function registerEventByJoinCode(joinCode: string, payload: JoinByCodeRegisterPayload): Promise<unknown> {
-  return post<unknown>(`events/join/${encodeURIComponent(joinCode)}/register/`, payload)
+  return post<unknown>(eventsPath(`join/${encodeURIComponent(joinCode)}/register/`), payload)
 }
 
 // --- Public events (no auth) ---
@@ -207,7 +210,7 @@ export function fetchPublicEvents(params?: PublicEventsListParams): Promise<Pagi
   if (params?.event_type != null) search.event_type = String(params.event_type)
   if (params?.search != null && params.search !== '') search.search = params.search
   return get<PaginatedResponse<PublicEvent>>(
-    'events/public_events/',
+    eventsPath('public_events/'),
     Object.keys(search).length ? search : undefined
   )
 }

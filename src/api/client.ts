@@ -1,17 +1,16 @@
-type Env = { API_BASE_URL?: string; API_AUTH_PREFIX?: string; VITE_AUTH_SCHEME?: string }
+/**
+ * API client: all requests go through axiosInstance (single place for base URL from .env,
+ * Authorization header, and 401 refresh + logout). Helpers here keep the same API for the rest of the app.
+ */
 
-function getEnv(): Env {
-  if (typeof import.meta === 'undefined') return {}
-  return (import.meta as unknown as { env?: Env }).env ?? {}
-}
+import { getApiBaseUrl } from '@/api/env'
+import { getAccessToken } from '@/api/token'
+import { axiosInstance } from '@/api/axiosInstance'
+
+export { getAuthPrefix } from '@/api/env'
 
 function getBaseUrl(): string {
-  return (getEnv().API_BASE_URL ?? '').replace(/\/$/, '')
-}
-
-export function getAuthPrefix(): string {
-  const prefix = getEnv().API_AUTH_PREFIX ?? 'auth'
-  return prefix.replace(/^\/|\/$/g, '')
+  return getApiBaseUrl()
 }
 
 export function apiUrl(path: string, searchParams?: Record<string, string>): string {
@@ -32,10 +31,6 @@ export function assetUrl(path: string): string {
   return base ? `${base}${path.startsWith('/') ? path : `/${path}`}` : path
 }
 
-/**
- * Base URL for media (e.g. profile pictures). Uses origin of API_BASE_URL from .env
- * so /media/profile_pictures/x.jpg becomes https://ahadiapi.quantumvision-tech.com/media/profile_pictures/x.jpg
- */
 function getMediaBaseUrl(): string {
   const base = getBaseUrl()
   if (!base) return typeof window !== 'undefined' ? window.location.origin : ''
@@ -46,7 +41,7 @@ function getMediaBaseUrl(): string {
   }
 }
 
-/** Full URL for a media path (e.g. /media/profile_pictures/xxx.jpg). Uses API host from .env. */
+/** Full URL for a media path. Uses API host from .env. */
 export function mediaUrl(path: string): string {
   if (!path) return ''
   if (path.startsWith('http://') || path.startsWith('https://')) return path
@@ -54,103 +49,52 @@ export function mediaUrl(path: string): string {
   return origin ? `${origin}${path.startsWith('/') ? path : `/${path}`}` : path
 }
 
-import { getAccessToken } from '@/api/token'
+// --- HTTP methods via axiosInstance (Authorization added by interceptor when token exists) ---
 
-/** Auth scheme: "Bearer" (JWT, default) or "Token" (e.g. Django REST). Set VITE_AUTH_SCHEME in .env if needed. */
-function getAuthScheme(): string {
-  const env = getEnv()
-  const scheme = env.VITE_AUTH_SCHEME?.trim()
-  return scheme || 'Bearer'
-}
-
-/** Build headers for every request: Accept + Authorization when access token exists. */
-function getAuthHeaders(): Record<string, string> {
-  const headers: Record<string, string> = { Accept: 'application/json' }
-  const token = getAccessToken()
-  if (token) {
-    headers['Authorization'] = `${getAuthScheme()} ${token}`
-  }
-  return headers
+function normPath(path: string): string {
+  return path.replace(/^\//, '')
 }
 
 export async function get<T>(path: string, params?: Record<string, string>): Promise<T> {
-  const url = apiUrl(path, params)
-  const res = await fetch(url, { method: 'GET', headers: getAuthHeaders() })
-  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`)
-  return res.json() as Promise<T>
+  const res = await axiosInstance.get<T>(normPath(path), { params })
+  return res.data
 }
 
-/** GET request with Authorization Bearer token (for authenticated endpoints). */
+/** GET with auth required (throws if no token; interceptor still adds it when present). */
 export async function getWithAuth<T>(path: string, params?: Record<string, string>): Promise<T> {
-  const url = apiUrl(path, params)
-  const headers = getAuthHeaders()
-  if (!headers['Authorization']) throw new Error('Not authenticated')
-  const res = await fetch(url, { method: 'GET', headers })
-  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`)
-  return res.json() as Promise<T>
+  if (!getAccessToken()) throw new Error('Not authenticated')
+  const res = await axiosInstance.get<T>(normPath(path), { params })
+  return res.data
 }
-
-const jsonHeaders = (): Record<string, string> => ({
-  'Content-Type': 'application/json',
-  Accept: 'application/json',
-  ...getAuthHeaders(),
-})
 
 export async function post<T>(path: string, body: unknown): Promise<T> {
-  const url = apiUrl(path)
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: jsonHeaders(),
-    body: JSON.stringify(body),
+  const res = await axiosInstance.post<T>(normPath(path), body, {
+    headers: { 'Content-Type': 'application/json' },
   })
-  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`)
-  const text = await res.text()
-  return (text ? JSON.parse(text) : {}) as T
+  return res.data
 }
 
 export async function put<T>(path: string, body: unknown): Promise<T> {
-  const url = apiUrl(path)
-  const res = await fetch(url, {
-    method: 'PUT',
-    headers: jsonHeaders(),
-    body: JSON.stringify(body),
+  const res = await axiosInstance.put<T>(normPath(path), body, {
+    headers: { 'Content-Type': 'application/json' },
   })
-  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`)
-  const text = await res.text()
-  return (text ? JSON.parse(text) : {}) as T
+  return res.data
 }
 
 export async function patch<T>(path: string, body: unknown): Promise<T> {
-  const url = apiUrl(path)
-  const res = await fetch(url, {
-    method: 'PATCH',
-    headers: jsonHeaders(),
-    body: JSON.stringify(body),
+  const res = await axiosInstance.patch<T>(normPath(path), body, {
+    headers: { 'Content-Type': 'application/json' },
   })
-  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`)
-  const text = await res.text()
-  return (text ? JSON.parse(text) : {}) as T
+  return res.data
 }
 
 /** PATCH with FormData (e.g. file upload). Do not set Content-Type; browser sets multipart boundary. */
 export async function patchMultipart<T>(path: string, formData: FormData): Promise<T> {
-  const url = apiUrl(path)
-  const headers = getAuthHeaders()
-  const res = await fetch(url, {
-    method: 'PATCH',
-    headers,
-    body: formData,
-  })
-  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`)
-  const text = await res.text()
-  return (text ? JSON.parse(text) : {}) as T
+  const res = await axiosInstance.patch<T>(normPath(path), formData)
+  return res.data
 }
 
-/** DELETE request; returns void on 204 or parsed JSON on 200. */
 export async function del<T = void>(path: string): Promise<T> {
-  const url = apiUrl(path)
-  const res = await fetch(url, { method: 'DELETE', headers: getAuthHeaders() })
-  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`)
-  const text = await res.text()
-  return (text ? JSON.parse(text) : undefined) as T
+  const res = await axiosInstance.delete<T>(normPath(path))
+  return res.data as T
 }

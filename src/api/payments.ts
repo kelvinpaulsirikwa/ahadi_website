@@ -4,6 +4,9 @@
  */
 
 import { get, getWithAuth, post, patch } from './client'
+import { getPaymentsPrefix } from '@/api/env'
+
+const paymentsPath = (suffix: string) => `${getPaymentsPrefix()}/${suffix}`
 
 // --- Payload types (from spec) ---
 
@@ -29,7 +32,7 @@ export interface SubscriptionCheckoutMnoPayload {
  * Get event info by Bill Pay identifier (public). Verify before payment via USSD.
  */
 export function fetchBillPayLookup(billIdentifier: string): Promise<unknown> {
-  return get<unknown>(`payments/billpay/lookup/${encodeURIComponent(billIdentifier)}/`)
+  return get<unknown>(paymentsPath(`billpay/lookup/${encodeURIComponent(billIdentifier)}/`))
 }
 
 // --- Callback (webhook – typically server-to-server) ---
@@ -39,7 +42,7 @@ export function fetchBillPayLookup(billIdentifier: string): Promise<unknown> {
  * AzamPay webhook; handle payment notifications. Usually called by provider, not from frontend.
  */
 export function paymentsCallback(payload: unknown): Promise<unknown> {
-  return post<unknown>('payments/callback/', payload)
+  return post<unknown>(paymentsPath('callback/'), payload)
 }
 
 // --- Checkout ---
@@ -49,7 +52,7 @@ export function paymentsCallback(payload: unknown): Promise<unknown> {
  * Bank checkout (CRDB, NMB). Initiates bank payment for contribution; requires OTP.
  */
 export function checkoutBank(body?: unknown): Promise<unknown> {
-  return post<unknown>('payments/checkout/bank/', body ?? {})
+  return post<unknown>(paymentsPath('checkout/bank/'), body ?? {})
 }
 
 /**
@@ -57,7 +60,7 @@ export function checkoutBank(body?: unknown): Promise<unknown> {
  * Get transaction fee for amount and provider. Query: amount, provider.
  */
 export function getCheckoutMnoFee(amount: number, provider: string): Promise<unknown> {
-  return get<unknown>('payments/checkout/mno/fee/', {
+  return get<unknown>(paymentsPath('checkout/mno/fee/'), {
     amount: String(amount),
     provider,
   })
@@ -69,7 +72,7 @@ export function getCheckoutMnoFee(amount: number, provider: string): Promise<unk
  * Body: event_id, amount, phone_number, provider, payer_name? (optional).
  */
 export function checkoutMno(body?: unknown): Promise<unknown> {
-  return post<unknown>('payments/checkout/mno/', body ?? {})
+  return post<unknown>(paymentsPath('checkout/mno/'), body ?? {})
 }
 
 // --- Contributions ---
@@ -79,7 +82,7 @@ export function checkoutMno(body?: unknown): Promise<unknown> {
  * Manual contribution entry by admin/organizer (cash, bank transfer, M-Pesa to personal number, items).
  */
 export function createManualContribution(body?: unknown): Promise<unknown> {
-  return post<unknown>('payments/contributions/manual/', body ?? {})
+  return post<unknown>(paymentsPath('contributions/manual/'), body ?? {})
 }
 
 // --- Disbursements (auth) ---
@@ -89,7 +92,7 @@ export function createManualContribution(body?: unknown): Promise<unknown> {
  * Disbursements received by the current user.
  */
 export function fetchDisbursements(): Promise<unknown> {
-  return getWithAuth<unknown>('payments/disbursements/')
+  return getWithAuth<unknown>(paymentsPath('disbursements/'))
 }
 
 /**
@@ -97,7 +100,7 @@ export function fetchDisbursements(): Promise<unknown> {
  * Check status of a disbursement.
  */
 export function fetchDisbursementByReference(reference: string): Promise<unknown> {
-  return getWithAuth<unknown>(`payments/disbursements/${encodeURIComponent(reference)}/`)
+  return getWithAuth<unknown>(paymentsPath(`disbursements/${encodeURIComponent(reference)}/`))
 }
 
 // --- Event-specific (auth) ---
@@ -106,7 +109,7 @@ export function fetchDisbursementByReference(reference: string): Promise<unknown
  * GET /api/v1/payments/events/{event_id}/billpay/
  */
 export function fetchEventBillPay(eventId: number): Promise<unknown> {
-  return getWithAuth<unknown>(`payments/events/${eventId}/billpay/`)
+  return getWithAuth<unknown>(paymentsPath(`events/${eventId}/billpay/`))
 }
 
 /**
@@ -114,7 +117,7 @@ export function fetchEventBillPay(eventId: number): Promise<unknown> {
  * Toggle Bill Pay account active/inactive.
  */
 export function patchEventBillPay(eventId: number, body?: unknown): Promise<unknown> {
-  return patch<unknown>(`payments/events/${eventId}/billpay/`, body ?? {})
+  return patch<unknown>(paymentsPath(`events/${eventId}/billpay/`), body ?? {})
 }
 
 /**
@@ -122,7 +125,7 @@ export function patchEventBillPay(eventId: number, body?: unknown): Promise<unkn
  * List contributions for an event (owner, staff, or participants).
  */
 export function fetchEventContributions(eventId: number): Promise<unknown> {
-  return getWithAuth<unknown>(`payments/events/${eventId}/contributions/`)
+  return getWithAuth<unknown>(paymentsPath(`events/${eventId}/contributions/`))
 }
 
 /**
@@ -130,7 +133,7 @@ export function fetchEventContributions(eventId: number): Promise<unknown> {
  * Initiate disbursement/payout to organizer (organizer or admin only).
  */
 export function disburseEvent(eventId: number, body?: unknown): Promise<unknown> {
-  return post<unknown>(`payments/events/${eventId}/disburse/`, body ?? {})
+  return post<unknown>(paymentsPath(`events/${eventId}/disburse/`), body ?? {})
 }
 
 /**
@@ -138,7 +141,7 @@ export function disburseEvent(eventId: number, body?: unknown): Promise<unknown>
  * List disbursements for an event.
  */
 export function fetchEventDisbursements(eventId: number): Promise<unknown> {
-  return getWithAuth<unknown>(`payments/events/${eventId}/disbursements/`)
+  return getWithAuth<unknown>(paymentsPath(`events/${eventId}/disbursements/`))
 }
 
 /**
@@ -146,7 +149,7 @@ export function fetchEventDisbursements(eventId: number): Promise<unknown> {
  * Payout summary: gross_amount, total_fees, net_payout, fee_breakdown (organizer/admin only).
  */
 export function fetchEventPayout(eventId: number): Promise<unknown> {
-  return getWithAuth<unknown>(`payments/events/${eventId}/payout/`)
+  return getWithAuth<unknown>(paymentsPath(`events/${eventId}/payout/`))
 }
 
 /**
@@ -154,7 +157,7 @@ export function fetchEventPayout(eventId: number): Promise<unknown> {
  * Transactions for event (owner/admin only).
  */
 export function fetchEventTransactions(eventId: number): Promise<unknown> {
-  return getWithAuth<unknown>(`payments/events/${eventId}/transactions/`)
+  return getWithAuth<unknown>(paymentsPath(`events/${eventId}/transactions/`))
 }
 
 // --- Manual update (sandbox) ---
@@ -164,7 +167,7 @@ export function fetchEventTransactions(eventId: number): Promise<unknown> {
  * Manually mark transaction completed (sandbox when callbacks are not sent).
  */
 export function manualUpdateTransaction(reference: string, body?: unknown): Promise<unknown> {
-  return post<unknown>(`payments/manual-update/${encodeURIComponent(reference)}/`, body ?? {})
+  return post<unknown>(paymentsPath(`manual-update/${encodeURIComponent(reference)}/`), body ?? {})
 }
 
 // --- Providers ---
@@ -174,7 +177,7 @@ export function manualUpdateTransaction(reference: string, body?: unknown): Prom
  * List available payment providers by type.
  */
 export function fetchPaymentProviders(): Promise<unknown> {
-  return get<unknown>('payments/providers/')
+  return get<unknown>(paymentsPath('providers/'))
 }
 
 // --- Subscriptions ---
@@ -184,7 +187,7 @@ export function fetchPaymentProviders(): Promise<unknown> {
  * Bill Pay name lookup for subscriptions (reference: AHADI-SUB-{user_id} or email).
  */
 export function subscriptionBillPayLookup(body?: unknown): Promise<unknown> {
-  return post<unknown>('payments/subscriptions/billpay/lookup/', body ?? {})
+  return post<unknown>(paymentsPath('subscriptions/billpay/lookup/'), body ?? {})
 }
 
 /**
@@ -192,7 +195,7 @@ export function subscriptionBillPayLookup(body?: unknown): Promise<unknown> {
  * Bill Pay payment notification for subscriptions.
  */
 export function subscriptionBillPayPayment(body?: unknown): Promise<unknown> {
-  return post<unknown>('payments/subscriptions/billpay/payment/', body ?? {})
+  return post<unknown>(paymentsPath('subscriptions/billpay/payment/'), body ?? {})
 }
 
 /**
@@ -200,7 +203,7 @@ export function subscriptionBillPayPayment(body?: unknown): Promise<unknown> {
  * Pay for subscription via bank. Body: { plan_id, billing_cycle, provider }.
  */
 export function subscriptionCheckoutBank(payload: SubscriptionCheckoutBankPayload): Promise<unknown> {
-  return post<unknown>('payments/subscriptions/checkout/bank/', payload)
+  return post<unknown>(paymentsPath('subscriptions/checkout/bank/'), payload)
 }
 
 /**
@@ -208,7 +211,7 @@ export function subscriptionCheckoutBank(payload: SubscriptionCheckoutBankPayloa
  * Pay for subscription via mobile money. Body: { plan_id, billing_cycle, provider, account_number }.
  */
 export function subscriptionCheckoutMno(payload: SubscriptionCheckoutMnoPayload): Promise<unknown> {
-  return post<unknown>('payments/subscriptions/checkout/mno/', payload)
+  return post<unknown>(paymentsPath('subscriptions/checkout/mno/'), payload)
 }
 
 /**
@@ -216,7 +219,7 @@ export function subscriptionCheckoutMno(payload: SubscriptionCheckoutMnoPayload)
  * Current user's subscription status.
  */
 export function fetchMySubscription(): Promise<unknown> {
-  return getWithAuth<unknown>('payments/subscriptions/my/')
+  return getWithAuth<unknown>(paymentsPath('subscriptions/my/'))
 }
 
 /**
@@ -224,7 +227,7 @@ export function fetchMySubscription(): Promise<unknown> {
  * All available subscription plans.
  */
 export function fetchSubscriptionPlans(): Promise<unknown> {
-  return get<unknown>('payments/subscriptions/plans/')
+  return get<unknown>(paymentsPath('subscriptions/plans/'))
 }
 
 // --- Transactions (auth) ---
@@ -235,7 +238,7 @@ export function fetchSubscriptionPlans(): Promise<unknown> {
  */
 export function fetchMyTransactions(params?: { status?: string }): Promise<unknown> {
   const query = params?.status ? { status: params.status } : undefined
-  return getWithAuth<unknown>('payments/transactions/', query as Record<string, string> | undefined)
+  return getWithAuth<unknown>(paymentsPath('transactions/'), query as Record<string, string> | undefined)
 }
 
 /**
@@ -243,7 +246,7 @@ export function fetchMyTransactions(params?: { status?: string }): Promise<unkno
  * Transaction status by reference.
  */
 export function fetchTransactionByReference(reference: string): Promise<unknown> {
-  return getWithAuth<unknown>(`payments/transactions/${encodeURIComponent(reference)}/`)
+  return getWithAuth<unknown>(paymentsPath(`transactions/${encodeURIComponent(reference)}/`))
 }
 
 // --- Wallet (auth) ---
@@ -253,5 +256,5 @@ export function fetchTransactionByReference(reference: string): Promise<unknown>
  * Organizer wallet summary – balance across events, withdrawable funds.
  */
 export function fetchWallet(): Promise<unknown> {
-  return getWithAuth<unknown>('payments/wallet/')
+  return getWithAuth<unknown>(paymentsPath('wallet/'))
 }

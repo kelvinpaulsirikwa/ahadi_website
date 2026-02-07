@@ -4,6 +4,9 @@
  */
 
 import { get, post, put, patch, del } from './client'
+import { getAnnouncementsPrefix } from '@/api/env'
+
+const announcementsPath = (suffix: string) => `${getAnnouncementsPrefix()}/${suffix}`
 
 // --- Types (from Swagger schema) ---
 
@@ -48,7 +51,7 @@ export function fetchAnnouncements(params?: { page?: number }): Promise<Paginate
   const search: Record<string, string> = {}
   if (params?.page != null) search.page = String(params.page)
   return get<PaginatedAnnouncementsResponse>(
-    'announcements/',
+    announcementsPath(''),
     Object.keys(search).length ? search : undefined
   )
 }
@@ -58,7 +61,7 @@ export function fetchAnnouncements(params?: { page?: number }): Promise<Paginate
  * Create announcement (201).
  */
 export function createAnnouncement(payload: AnnouncementCreatePayload): Promise<Announcement> {
-  return post<Announcement>('announcements/', payload)
+  return post<Announcement>(announcementsPath(''), payload)
 }
 
 /**
@@ -66,7 +69,7 @@ export function createAnnouncement(payload: AnnouncementCreatePayload): Promise<
  * Get announcement by id.
  */
 export function fetchAnnouncementById(id: number): Promise<Announcement> {
-  return get<Announcement>(`announcements/${id}/`)
+  return get<Announcement>(announcementsPath(`${id}/`))
 }
 
 /**
@@ -74,7 +77,7 @@ export function fetchAnnouncementById(id: number): Promise<Announcement> {
  * Full update.
  */
 export function updateAnnouncement(id: number, payload: AnnouncementUpdatePayload): Promise<Announcement> {
-  return put<Announcement>(`announcements/${id}/`, payload)
+  return put<Announcement>(announcementsPath(`${id}/`), payload)
 }
 
 /**
@@ -90,5 +93,5 @@ export function patchAnnouncement(id: number, payload: AnnouncementUpdatePayload
  * Delete announcement (204).
  */
 export function deleteAnnouncement(id: number): Promise<void> {
-  return del<void>(`announcements/${id}/`)
+  return del<void>(announcementsPath(`${id}/`))
 }

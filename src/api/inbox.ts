@@ -4,6 +4,9 @@
  */
 
 import { getWithAuth, post, put, patch, del } from './client'
+import { getInboxPrefix } from '@/api/env'
+
+const inboxPath = (suffix: string) => `${getInboxPrefix()}/${suffix}`
 
 // --- Types (from Swagger schema) ---
 
@@ -62,41 +65,41 @@ export function fetchInbox(params?: { page?: number }): Promise<PaginatedInboxRe
   const search: Record<string, string> = {}
   if (params?.page != null) search.page = String(params.page)
   return getWithAuth<PaginatedInboxResponse>(
-    'inbox/',
+    inboxPath(''),
     Object.keys(search).length ? search : undefined
   )
 }
 
 /** POST /api/v1/inbox/ – Create inbox message (201). */
 export function createInbox(payload: InboxCreatePayload): Promise<InboxMessage> {
-  return post<InboxMessage>('inbox/', payload)
+  return post<InboxMessage>(inboxPath(''), payload)
 }
 
 /** GET /api/v1/inbox/{id}/ – Get specific message. */
 export function fetchInboxById(id: number): Promise<InboxMessage> {
-  return getWithAuth<InboxMessage>(`inbox/${id}/`)
+  return getWithAuth<InboxMessage>(inboxPath(`${id}/`))
 }
 
 /** PUT /api/v1/inbox/{id}/ – Full update. */
 export function updateInbox(id: number, payload: InboxUpdatePayload): Promise<InboxMessage> {
-  return put<InboxMessage>(`inbox/${id}/`, payload)
+  return put<InboxMessage>(inboxPath(`${id}/`), payload)
 }
 
 /** PATCH /api/v1/inbox/{id}/ – Partial update. */
 export function patchInbox(id: number, payload: InboxUpdatePayload): Promise<InboxMessage> {
-  return patch<InboxMessage>(`inbox/${id}/`, payload)
+  return patch<InboxMessage>(inboxPath(`${id}/`), payload)
 }
 
 /** DELETE /api/v1/inbox/{id}/ – Delete message (204). */
 export function deleteInbox(id: number): Promise<void> {
-  return del<void>(`inbox/${id}/`)
+  return del<void>(inboxPath(`${id}/`))
 }
 
 // --- Mark read ---
 
 /** POST /api/v1/inbox/{id}/mark_read/ – Mark message as read. */
 export function markInboxRead(id: number, body?: InboxUpdatePayload): Promise<InboxMessage> {
-  return post<InboxMessage>(`inbox/${id}/mark_read/`, body ?? {})
+  return post<InboxMessage>(inboxPath(`${id}/mark_read/`), body ?? {})
 }
 
 /**
@@ -104,15 +107,15 @@ export function markInboxRead(id: number, body?: InboxUpdatePayload): Promise<In
  * Get count of unread messages. No parameters. Returns 200 application/json.
  */
 export function fetchInboxUnreadCount(): Promise<InboxUnreadCountResponse> {
-  return getWithAuth<InboxUnreadCountResponse>('inbox/unread_count/')
+  return getWithAuth<InboxUnreadCountResponse>(inboxPath('unread_count/'))
 }
 
 /** GET /api/v1/inbox/conversations/ – Get all conversations for current user (messages grouped by conversation partner). */
 export function fetchInboxConversations(): Promise<unknown> {
-  return getWithAuth<unknown>('inbox/conversations/')
+  return getWithAuth<unknown>(inboxPath('conversations/'))
 }
 
 /** POST /api/v1/inbox/mark_all_read/ – Mark all messages as read. */
 export function markAllInboxRead(body?: InboxUpdatePayload): Promise<unknown> {
-  return post<unknown>('inbox/mark_all_read/', body ?? {})
+  return post<unknown>(inboxPath('mark_all_read/'), body ?? {})
 }

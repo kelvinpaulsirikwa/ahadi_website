@@ -4,6 +4,9 @@
  */
 
 import { get } from './client'
+import { getInvitationTemplatesPrefix } from '@/api/env'
+
+const invitationTemplatesPath = (suffix: string) => `${getInvitationTemplatesPrefix()}/${suffix}`
 
 // --- Types (from Swagger schema) ---
 
@@ -46,7 +49,7 @@ export function fetchInvitationTemplates(params?: { page?: number }): Promise<Pa
   const search: Record<string, string> = {}
   if (params?.page != null) search.page = String(params.page)
   return get<PaginatedInvitationTemplatesResponse>(
-    'invitation-templates/',
+    invitationTemplatesPath(''),
     Object.keys(search).length ? search : undefined
   )
 }
@@ -56,7 +59,7 @@ export function fetchInvitationTemplates(params?: { page?: number }): Promise<Pa
  * Get template details.
  */
 export function fetchInvitationTemplateById(id: number): Promise<InvitationTemplate> {
-  return get<InvitationTemplate>(`invitation-templates/${id}/`)
+  return get<InvitationTemplate>(invitationTemplatesPath(`${id}/`))
 }
 
 /**
@@ -64,7 +67,7 @@ export function fetchInvitationTemplateById(id: number): Promise<InvitationTempl
  * List available template categories.
  */
 export function fetchInvitationTemplateCategories(): Promise<unknown> {
-  return get<unknown>('invitation-templates/categories/')
+  return get<unknown>(invitationTemplatesPath('categories/'))
 }
 
 /**
@@ -72,7 +75,7 @@ export function fetchInvitationTemplateCategories(): Promise<unknown> {
  * Filter by category. Params: category (e.g. WEDDING).
  */
 export function fetchInvitationTemplatesByCategory(category: string): Promise<unknown> {
-  return get<unknown>('invitation-templates/by_category/', { category })
+  return get<unknown>(invitationTemplatesPath('by_category/'), { category })
 }
 
 /**
@@ -80,7 +83,7 @@ export function fetchInvitationTemplatesByCategory(category: string): Promise<un
  * Get free templates.
  */
 export function fetchFreeInvitationTemplates(): Promise<unknown> {
-  return get<unknown>('invitation-templates/free_templates/')
+  return get<unknown>(invitationTemplatesPath('free_templates/'))
 }
 
 /**
@@ -88,5 +91,5 @@ export function fetchFreeInvitationTemplates(): Promise<unknown> {
  * Get premium templates.
  */
 export function fetchPremiumInvitationTemplates(): Promise<unknown> {
-  return get<unknown>('invitation-templates/premium_templates/')
+  return get<unknown>(invitationTemplatesPath('premium_templates/'))
 }
