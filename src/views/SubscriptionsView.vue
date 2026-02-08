@@ -457,7 +457,7 @@ onMounted(load)
 
 <style scoped>
 .subscriptions-page { min-height: 100vh; background: #f8fafc; }
-.subscriptions-main { max-width: 640px; margin: 0 auto; padding: 24px 16px; }
+.subscriptions-main { max-width: 640px; margin: 0 auto; padding: 24px 16px; padding-top: 72px; }
 .sub-header { margin-bottom: 24px; }
 .btn-back { background: none; border: none; color: #64748b; cursor: pointer; font-size: 14px; padding: 0; margin-bottom: 8px; }
 .btn-back:hover { color: #1e293b; }

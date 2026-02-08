@@ -206,6 +206,7 @@ onMounted(() => {
   max-width: 720px;
   margin: 0 auto;
   padding: 24px 16px;
+  padding-top: 72px;
 }
 
 .calendar-header {

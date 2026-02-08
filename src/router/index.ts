@@ -4,7 +4,6 @@ import HomeView from '@/views/HomeView.vue'
 import LoginView from '@/views/LoginView.vue'
 import EventsView from '@/views/EventsView.vue'
 import CreateEventView from '@/views/CreateEventView.vue'
-import EventDetailView from '@/views/EventDetailView.vue'
 import EventContributionsView from '@/views/EventContributionsView.vue'
 import EventParticipantsView from '@/views/EventParticipantsView.vue'
 import EventWalletView from '@/views/EventWalletView.vue'
@@ -52,8 +51,7 @@ const router = createRouter({
     {
       path: '/events/:id',
       name: 'events-detail',
-      component: EventDetailView,
-      meta: { requiresAuth: true },
+      redirect: (to) => ({ name: 'event-public', params: { id: to.params.id } }),
     },
     {
       path: '/events/:id/contributions',

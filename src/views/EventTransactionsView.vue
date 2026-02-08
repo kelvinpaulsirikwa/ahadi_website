@@ -115,7 +115,7 @@ function methodDisplay(t: TransactionItem): string {
 }
 
 function goBack() {
-  router.push({ name: 'events-detail', params: { id: String(eventId.value) } })
+  router.push({ name: 'event-public', params: { id: String(eventId.value) } })
 }
 </script>
 
@@ -211,7 +211,7 @@ function goBack() {
 
 <style scoped>
 .transactions-page { min-height: 100vh; background: #f8fafc; }
-.transactions-main { max-width: 720px; margin: 0 auto; padding: 24px 20px 48px; }
+.transactions-main { max-width: 720px; margin: 0 auto; padding: 24px 20px 48px; padding-top: 72px; }
 .back-link { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; padding: 8px 0; font-size: 14px; color: #6b7280; background: none; border: none; cursor: pointer; }
 .back-link:hover { color: #1a283b; }
 .page-header { margin-bottom: 24px; }

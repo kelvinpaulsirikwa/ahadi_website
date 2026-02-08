@@ -333,6 +333,7 @@ onMounted(() => loadProfile())
   max-width: 560px;
   margin: 0 auto;
   padding: 24px 16px;
+  padding-top: 72px;
 }
 
 .profile-header {

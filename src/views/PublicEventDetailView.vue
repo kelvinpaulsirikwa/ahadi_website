@@ -221,15 +221,6 @@ const countdown = computed(() => {
   return { past: false, days, hours: h, minutes: m, seconds: s }
 })
 
-const countdownLabel = computed(() => {
-  const c = countdown.value
-  if (!c) return ''
-  if (c.past) return 'Event started'
-  if (c.days > 0) return `${c.days} day${c.days !== 1 ? 's' : ''} to go`
-  if (c.hours > 0 || c.minutes > 0 || c.seconds > 0) return 'Starts today'
-  return 'Starting now'
-})
-
 const participantCount = computed(() => {
   const n = event.value?.participant_count
   if (n === undefined || n === null || n === '') return 0
@@ -328,6 +319,47 @@ function copyJoinCode() {
     setTimeout(() => { joinCodeCopied.value = false }, 2000)
   }).catch(() => {})
 }
+
+const copyLinkCopied = ref(false)
+function copyLink() {
+  const url = window.location.href
+  navigator.clipboard.writeText(url).then(() => {
+    copyLinkCopied.value = true
+    setTimeout(() => { copyLinkCopied.value = false }, 2000)
+  }).catch(() => {})
+}
+
+function shareOnFacebook() {
+  const url = encodeURIComponent(window.location.href)
+  window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank', 'noopener,noreferrer')
+}
+
+function shareOnTwitter() {
+  const ev = event.value
+  const url = encodeURIComponent(window.location.href)
+  const text = ev ? encodeURIComponent(`Check out "${ev.title}" on Ahadi`) : ''
+  window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank', 'noopener,noreferrer')
+}
+
+function shareOnLinkedIn() {
+  const url = encodeURIComponent(window.location.href)
+  window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank', 'noopener,noreferrer')
+}
+
+const shareCardTitle = computed(() => {
+  const ev = event.value
+  if (!ev) return 'Share this event'
+  const name = ev.owner_name || ev.title
+  const eventType = ev.event_type_name || 'event'
+  return `Share ${name}'s ${eventType}`
+})
+
+const shareCardTagline = computed(() => {
+  const ev = event.value
+  if (!ev) return 'Help spread the word and get more support.'
+  const name = ev.owner_name || ev.title
+  return `Help spread the word and get more support for ${name}.`
+})
 </script>
 
 <template>
@@ -359,6 +391,37 @@ function copyJoinCode() {
         <div class="event-layout">
           <!-- Left Column: Image and Story -->
           <div class="event-left">
+            <!-- Countdown at top (frosted boxes, orange seconds) -->
+            <div v-if="startDate && countdown" class="countdown-card countdown-card-top">
+              <div class="countdown-label">{{ countdown.past ? 'Event started' : 'Event starts in' }}</div>
+              <template v-if="!countdown.past">
+                <div class="countdown-grid">
+                  <div class="countdown-box">
+                    <span class="countdown-num">{{ countdown.days }}</span>
+                    <span class="countdown-unit-label">Days</span>
+                  </div>
+                  <div class="countdown-box">
+                    <span class="countdown-num">{{ String(countdown.hours).padStart(2, '0') }}</span>
+                    <span class="countdown-unit-label">Hours</span>
+                  </div>
+                  <div class="countdown-box">
+                    <span class="countdown-num">{{ String(countdown.minutes).padStart(2, '0') }}</span>
+                    <span class="countdown-unit-label">Minutes</span>
+                  </div>
+                  <div class="countdown-box">
+                    <span class="countdown-num countdown-num-seconds">{{ String(countdown.seconds).padStart(2, '0') }}</span>
+                    <span class="countdown-unit-label">Seconds</span>
+                  </div>
+                </div>
+                <p class="countdown-subtitle">
+                  <span class="countdown-subtitle-icon" aria-hidden="true">🕐</span>
+                  Time remaining until event starts
+                </p>
+                <p class="countdown-date">{{ formattedStartDate }}</p>
+              </template>
+              <p v-else class="countdown-date">{{ formattedStartDate }}</p>
+            </div>
+
             <h1 class="event-title">
               {{ event.title }}
               <span v-if="event.event_type_name" class="event-type-badge">{{ event.event_type_name }}</span>
@@ -383,33 +446,6 @@ function copyJoinCode() {
               <h2 class="story-title">{{ event.title }}'s Story</h2>
               <p v-if="event.description" class="story-text">{{ event.description }}</p>
               <p v-else class="story-text">This event is organized to bring together family, friends, and loved ones in one shared digital space. Through Ahadi, guests can view event details, receive updates, share memories, confirm attendance, and stay connected before, during, and after the celebration — making the experience seamless, interactive, and memorable for everyone involved.</p>
-            </div>
-
-            <!-- Countdown to event start -->
-            <div v-if="startDate && countdown" class="countdown-card">
-              <div class="countdown-label">{{ countdownLabel }}</div>
-              <template v-if="!countdown.past">
-                <div class="countdown-grid">
-                  <div class="countdown-unit">
-                    <span class="countdown-num">{{ countdown.days }}</span>
-                    <span class="countdown-unit-label">Days</span>
-                  </div>
-                  <div class="countdown-unit">
-                    <span class="countdown-num">{{ String(countdown.hours).padStart(2, '0') }}</span>
-                    <span class="countdown-unit-label">Hours</span>
-                  </div>
-                  <div class="countdown-unit">
-                    <span class="countdown-num">{{ String(countdown.minutes).padStart(2, '0') }}</span>
-                    <span class="countdown-unit-label">Min</span>
-                  </div>
-                  <div class="countdown-unit">
-                    <span class="countdown-num">{{ String(countdown.seconds).padStart(2, '0') }}</span>
-                    <span class="countdown-unit-label">Sec</span>
-                  </div>
-                </div>
-                <p class="countdown-date">{{ formattedStartDate }}</p>
-              </template>
-              <p v-else class="countdown-date">{{ formattedStartDate }}</p>
             </div>
 
             <!-- Event details: dates, location, venue, join code -->
@@ -442,18 +478,6 @@ function copyJoinCode() {
                   <div class="event-detail-content">
                     <span class="event-detail-label">Venue</span>
                     <span class="event-detail-value">{{ event.venue_name || '—' }}</span>
-                  </div>
-                </div>
-                <div v-if="event.join_code" class="event-detail-row">
-                  <span class="event-detail-icon" aria-hidden="true">🔗</span>
-                  <div class="event-detail-content">
-                    <span class="event-detail-label">Join code</span>
-                    <span class="event-detail-value event-detail-join-row">
-                      <code class="join-code">{{ event.join_code }}</code>
-                      <button type="button" class="btn-copy-join" @click="copyJoinCode">
-                        {{ joinCodeCopied ? 'Copied!' : 'Copy' }}
-                      </button>
-                    </span>
                   </div>
                 </div>
               </div>
@@ -569,15 +593,15 @@ function copyJoinCode() {
                 </button>
               </div>
 
-              <!-- Action Buttons -->
-              <div class="action-buttons">
-                <button type="button" class="btn-action btn-join-action" @click="openJoin">
-                  <span class="btn-action-icon">👤</span>
+              <!-- Join and Get code (2 buttons) -->
+              <div class="action-card">
+                <button type="button" class="action-card-btn action-card-join" @click="openJoin">
+                  <span class="action-card-icon action-card-icon-join">👤</span>
                   Join
                 </button>
-                <button type="button" class="btn-action btn-share-action" @click="shareEvent">
-                  <span class="btn-action-icon">📤</span>
-                  Share Event
+                <button type="button" class="action-card-btn action-card-light" @click="copyJoinCode" :disabled="!event.join_code">
+                  <span class="action-card-icon action-card-icon-code">🔗</span>
+                  {{ joinCodeCopied ? 'Copied!' : 'Get code' }}
                 </button>
               </div>
 
@@ -623,6 +647,30 @@ function copyJoinCode() {
                   <div class="supporter-name">Event Organizer</div>
                   <div class="supporter-amount">{{ currency }}{{ formatAmount(totalContributions || 0) }} {{ formattedStartDate ? formattedStartDate.split(',')[0] : '' }}</div>
                 </div>
+              </div>
+
+              <!-- Share card at bottom of right column -->
+              <div class="share-story-card">
+                <h3 class="share-story-title">{{ shareCardTitle }}</h3>
+                <p class="share-story-tagline">{{ shareCardTagline }}</p>
+                <div class="share-story-buttons">
+                  <button type="button" class="share-story-btn" @click="shareOnFacebook">
+                    <span class="share-story-icon share-story-icon-fb">f</span>
+                    Facebook
+                  </button>
+                  <button type="button" class="share-story-btn" @click="shareOnTwitter">
+                    <span class="share-story-icon share-story-icon-x">𝕏</span>
+                    X (Twitter)
+                  </button>
+                  <button type="button" class="share-story-btn" @click="shareOnLinkedIn">
+                    <span class="share-story-icon share-story-icon-in">in</span>
+                    LinkedIn
+                  </button>
+                </div>
+                <button type="button" class="share-story-copy-link" @click="copyLink">
+                  <span class="share-story-copy-icon" aria-hidden="true">🔗</span>
+                  {{ copyLinkCopied ? 'Link copied!' : 'Copy Link' }}
+                </button>
               </div>
             </div>
           </div>
@@ -789,7 +837,7 @@ function copyJoinCode() {
   line-height: 1.7;
 }
 
-/* Countdown to event start */
+/* Countdown to event start (frosted boxes, orange seconds) */
 .countdown-card {
   margin-top: 2rem;
   padding: 1.5rem;
@@ -799,28 +847,39 @@ function copyJoinCode() {
   text-align: center;
 }
 
+.countdown-card-top {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+}
+
 .countdown-label {
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 0.8125rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  opacity: 0.9;
+  letter-spacing: 0.1em;
+  opacity: 0.95;
   margin-bottom: 1rem;
 }
 
 .countdown-grid {
   display: flex;
   justify-content: center;
-  gap: 1rem;
+  gap: 0.75rem;
   flex-wrap: wrap;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
 }
 
-.countdown-unit {
+.countdown-box {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 56px;
+  justify-content: center;
+  min-width: 64px;
+  padding: 0.75rem 0.5rem;
+  background: rgba(59, 130, 246, 0.18);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
 }
 
 .countdown-num {
@@ -828,6 +887,11 @@ function copyJoinCode() {
   font-weight: 700;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+
+.countdown-num.countdown-num-seconds {
+  color: #f97316;
 }
 
 .countdown-unit-label {
@@ -835,8 +899,25 @@ function copyJoinCode() {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  opacity: 0.85;
-  margin-top: 2px;
+  opacity: 0.9;
+  margin-top: 4px;
+  color: #fff;
+}
+
+.countdown-subtitle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  opacity: 0.9;
+  color: #e2e8f0;
+}
+
+.countdown-subtitle-icon {
+  font-size: 0.875rem;
+  opacity: 0.9;
 }
 
 .countdown-date {
@@ -898,35 +979,6 @@ function copyJoinCode() {
   font-size: 0.9375rem;
   color: #111827;
   line-height: 1.4;
-}
-
-.event-detail-join-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.join-code {
-  font-family: ui-monospace, monospace;
-  font-size: 0.875rem;
-  padding: 4px 8px;
-  background: #e5e7eb;
-  border-radius: 6px;
-}
-
-.btn-copy-join {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #3b82f6;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 2px 0;
-}
-
-.btn-copy-join:hover {
-  text-decoration: underline;
 }
 
 /* Right Column - Donation Widget */
@@ -1101,23 +1153,25 @@ function copyJoinCode() {
   color: #22c55e;
 }
 
-/* Action Buttons */
-.action-buttons {
+/* Join, Get code, Share card */
+.action-card {
   display: flex;
   gap: 0.75rem;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
 }
 
-.btn-action {
+.action-card-btn {
   flex: 1;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.875rem 1rem;
+  padding: 0.875rem 0.75rem;
   font-size: 0.9375rem;
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: 10px;
   border: none;
   cursor: pointer;
   font-family: inherit;
@@ -1125,28 +1179,42 @@ function copyJoinCode() {
   min-height: 44px;
 }
 
-.btn-action-icon {
-  font-size: 1.125rem;
+.action-card-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.btn-join-action {
-  background: #1a283b;
+.action-card-icon {
+  font-size: 1.125rem;
+  flex-shrink: 0;
+}
+
+.action-card-join {
+  background: #1d202f;
   color: #fff;
 }
 
-.btn-join-action:hover {
-  background: #2d3a4f;
+.action-card-join:hover:not(:disabled) {
+  background: #2a2d3f;
 }
 
-.btn-share-action {
+.action-card-icon-join {
+  filter: brightness(1.1);
+}
+
+.action-card-light {
   background: #fff;
-  color: #374151;
-  border: 2px solid #e5e7eb;
+  color: #3d4155;
+  border: 1px solid #e0e2e8;
 }
 
-.btn-share-action:hover {
+.action-card-light:hover:not(:disabled) {
   background: #f9fafb;
   border-color: #d1d5db;
+}
+
+.action-card-icon-code {
+  opacity: 0.9;
 }
 
 /* Contributors Section */
@@ -1313,6 +1381,105 @@ function copyJoinCode() {
 .supporter-amount {
   font-size: 0.875rem;
   color: #6b7280;
+}
+
+/* Share story card (bottom of right column) */
+.share-story-card {
+  margin-top: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.share-story-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: #374151;
+}
+
+.share-story-tagline {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+  line-height: 1.45;
+}
+
+.share-story-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.share-story-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  background: #fff;
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.share-story-btn:hover {
+  background: #eff6ff;
+  border-color: #2563eb;
+}
+
+.share-story-icon {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.share-story-icon-fb {
+  color: #1877f2;
+}
+
+.share-story-icon-x {
+  font-size: 0.8125rem;
+}
+
+.share-story-icon-in {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #0a66c2;
+}
+
+.share-story-copy-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  background: #fff;
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.share-story-copy-link:hover {
+  background: #eff6ff;
+  border-color: #2563eb;
+}
+
+.share-story-copy-icon {
+  font-size: 0.9375rem;
 }
 
 /* Responsive adjustments */

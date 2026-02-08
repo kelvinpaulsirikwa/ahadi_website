@@ -334,7 +334,7 @@ async function sendMessage() {
 
 function goBack() {
   if (eventId.value) {
-    router.push({ name: 'events-detail', params: { id: String(eventId.value) } })
+    router.push({ name: 'event-public', params: { id: String(eventId.value) } })
   } else {
     router.push({ name: 'events' })
   }

@@ -82,7 +82,7 @@ function goToCreateEvent() {
         >
           <template #actions>
             <router-link
-              :to="{ name: 'events-detail', params: { id: String(event.id) } }"
+              :to="{ name: 'event-public', params: { id: String(event.id) } }"
               class="events-manage-link"
               @click.stop
             >
@@ -105,11 +105,12 @@ function goToCreateEvent() {
   max-width: 1200px;
   margin: 0 auto;
   padding: 32px 24px 48px;
+  padding-top: 72px;
 }
 
 @media (max-width: 768px) {
   .events-main {
-    padding: 20px 16px 32px;
+    padding: 72px 16px 32px;
   }
 }
 

@@ -452,6 +452,7 @@ function formatParticipantAmount(value: string): string {
   max-width: 720px;
   margin: 0 auto;
   padding: 24px 20px 48px;
+  padding-top: 72px;
 }
 
 .state {
