@@ -331,6 +331,7 @@ function back() {
   max-width: 640px;
   margin: 0 auto;
   padding: 24px 20px 48px;
+  padding-top: 72px;
 }
 
 .create-header {

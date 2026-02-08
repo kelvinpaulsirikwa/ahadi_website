@@ -276,7 +276,7 @@ onMounted(loadProfile)
 }
 .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
 
-.edit-main { max-width: 480px; margin: 0 auto; padding: 24px 16px; }
+.edit-main { max-width: 480px; margin: 0 auto; padding: 24px 16px; padding-top: 72px; }
 .state { text-align: center; padding: 48px; color: #64748b; }
 
 .photo-section { text-align: center; margin-bottom: 32px; }

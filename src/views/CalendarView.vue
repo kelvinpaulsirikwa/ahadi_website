@@ -98,7 +98,7 @@ function addToCalendar(_event: PublicEvent) {
 }
 
 function goToEvent(event: PublicEvent) {
-  router.push({ name: 'events-detail', params: { id: String(event.id) } })
+  router.push({ name: 'event-public', params: { id: String(event.id) } })
 }
 
 onMounted(() => {
@@ -206,6 +206,7 @@ onMounted(() => {
   max-width: 720px;
   margin: 0 auto;
   padding: 24px 16px;
+  padding-top: 72px;
 }
 
 .calendar-header {
